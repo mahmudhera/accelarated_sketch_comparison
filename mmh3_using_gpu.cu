@@ -132,8 +132,6 @@ void hashOnGPU(const void* input_string, int input_string_length, uint32_t seed,
 
     // call kernel function
     hashKernel<<<1, num_kmers>>>(d_key, k, seed, d_out);
-    // wait for the kernel to finish
-    cudaDeviceSynchronize();
 
     double end_time = clock();
 
@@ -159,6 +157,9 @@ int main() {
     uint64_t out[2*num_kmers];
 
     hashOnGPU(input_string, input_string_length, seed, out, k);
+    // wait for the kernel to finish
+    cudaDeviceSynchronize();
+
 
     for (int i = 0; i < num_kmers; i++) {
         std::cout << out[2*i] << " " << out[2*i + 1] << std::endl;
