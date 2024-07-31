@@ -123,7 +123,7 @@ void hashOnGPU(const void* input_string, int input_string_length, uint32_t seed,
     cudaMalloc(&d_out, sizeof(uint64_t) * 2 * num_kmers); // two 64-bit integers for each k-mer
 
     // copy data to device
-    cudaMemcpy(d_key, key, len, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_key, input_string, input_string_length, cudaMemcpyHostToDevice);
 
     // measure start and end time
     double start_time = clock();
@@ -143,11 +143,11 @@ void hashOnGPU(const void* input_string, int input_string_length, uint32_t seed,
 
 int main() {
     const char* input_string = "ACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAG";
-    int input_string_length = strlen(key);
+    int input_string_length = strlen(input_string);
     uint32_t seed = 0;
     int k = 21;
     int num_kmers = input_string_length - k + 1;
-    uint64_t out[2*num_instances];
+    uint64_t out[2*num_kmers];
 
     hashOnGPU(input_string, input_string_length, seed, out, k);
 
