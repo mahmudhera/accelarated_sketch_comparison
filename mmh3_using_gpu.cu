@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <string>
 
+using namespace std;
+
 
 __device__ uint64_t rotateLeft(uint64_t x, int r) {
     return (x << r) | (x >> (64 - r));
