@@ -127,14 +127,14 @@ void hashOnGPU(const void* key, int len, uint32_t seed, void* out) {
 }
 
 int main() {
-    const char* key = "example";
+    const char* key = "ACGTGCAG";
     int len = strlen(key);
     uint32_t seed = 42;
     uint64_t out[2];
 
     hashOnGPU(key, len, seed, out);
 
-    std::cout << "Hash: " << out[0] << " " << out[1] << std::endl;
+    std::cout << "Hash: " << out[0] << endl << out[1] << std::endl;
 
     return 0;
 }
