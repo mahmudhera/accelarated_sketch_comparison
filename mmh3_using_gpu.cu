@@ -161,9 +161,9 @@ int main() {
     // wait for the kernel to finish
     cudaDeviceSynchronize();
 
-
+    string s(input_string);
     for (int i = 0; i < num_kmers; i++) {
-        string kmer = input_string.substr(i, k);
+        string kmer = s.substr(i, k);
         std::cout << kmer << " " << out[2*i] << " " << out[2*i + 1] << std::endl;
     }
 
