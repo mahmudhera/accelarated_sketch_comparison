@@ -1,5 +1,6 @@
 #include <iostream>
 #include <ctime>
+#include <cstring>
 
 using namespace std;
 
@@ -120,6 +121,6 @@ int main() {
   for (int i = 0; i < num_kmers; i++) {
     cout << out[2*i] << " " << out[2*i+1] << endl;
   }
-  
+
   return 0;
 }
