@@ -134,7 +134,7 @@ int main() {
 
     hashOnGPU(key, len, seed, out);
 
-    std::cout << "Hash: " << out[0] << endl << out[1] << std::endl;
+    std::cout << "Hash: " << out[0] << std::endl << out[1] << std::endl;
 
     return 0;
 }
