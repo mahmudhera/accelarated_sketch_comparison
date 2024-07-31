@@ -4,6 +4,7 @@
 #include <cstring>
 #include <ctime>
 #include <unistd.h>
+#include <string>
 
 
 __device__ uint64_t rotateLeft(uint64_t x, int r) {
@@ -110,7 +111,7 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
 __global__ void hashKernel(const void* input_string, int k, uint32_t seed, void* out) {
     // get the index of the thread, linear index of the thread in the thread block
     int i = threadIdx.x;
-    murmurhash3_x64_128((const char*)input_string + i, k, seed, (uint64_t*)out + 2*i);
+    murmurhash3_x64_128((char*)input_string + i, k, seed, (uint64_t*)out + 2*i);
 }
 
 // Host function to allocate memory and copy data
@@ -137,9 +138,6 @@ void hashOnGPU(const void* input_string, int input_string_length, uint32_t seed,
 
     std::cout << "Time taken: " << (end_time - start_time) / CLOCKS_PER_SEC << std::endl;
 
-    // sleep for 1 second
-    sleep(1);
-
     // copy data back to host
     cudaMemcpy(out, d_out, sizeof(uint64_t) * 2 * num_kmers, cudaMemcpyDeviceToHost);
 
@@ -154,6 +152,7 @@ int main() {
     uint32_t seed = 0;
     int k = 21;
     int num_kmers = input_string_length - k + 1;
+    num_kmers = 1;
     uint64_t out[2*num_kmers];
 
     hashOnGPU(input_string, input_string_length, seed, out, k);
@@ -162,7 +161,8 @@ int main() {
 
 
     for (int i = 0; i < num_kmers; i++) {
-        std::cout << out[2*i] << " " << out[2*i + 1] << std::endl;
+        string kmer = input_string.substr(i, k);
+        std::cout << kmer << " " << out[2*i] << " " << out[2*i + 1] << std::endl;
     }
 
     return 0;
