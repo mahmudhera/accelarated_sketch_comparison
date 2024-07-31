@@ -29,12 +29,15 @@ __device__ uint64_t fmix64(uint64_t k) {
 __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32_t seed, void* out) {
 
     // show the key: string of characters
-    for (int i = 0; i < len; i++) {
-        printf("%c", ((char*)key)[i]);
+    if (threadIdx.x == 0) {
+        printf("Key: ");
+        for (int i = 0; i < len; i++) {
+            printf("%c", ((char*)key)[i]);
+        }
+        printf("\n");
+        // show thread id
+        printf("Thread id: %d\n", threadIdx.x);
     }
-    printf("\n");
-    // show thread id
-    printf("Thread id: %d\n", threadIdx.x);
 
     const uint8_t* data = (const uint8_t*)key;
     const int nblocks = len / 16;
