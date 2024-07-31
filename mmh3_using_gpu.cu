@@ -9,7 +9,15 @@
 using namespace std;
 
 
-uint64_t fmix64(uint64_t k) {
+__device__ uint64_t rotateLeft(uint64_t x, int r) {
+    return (x << r) | (x >> (64 - r));
+}
+
+__device__ uint64_t getblock64(const uint64_t* p, int i) {
+    return p[i];
+}
+
+__device__ uint64_t fmix64(uint64_t k) {
     k ^= k >> 33;
     k *= 0xff51afd7ed558ccd;
     k ^= k >> 33;
@@ -18,14 +26,15 @@ uint64_t fmix64(uint64_t k) {
     return k;
 }
 
-// Kernel function
-__global__ void hashKernel(const void* input_string, int k, uint32_t seed, void* out) {
-    // get the index of the thread, linear index of the thread in the thread block
-    int i = threadIdx.x;
-    
-    void* key = (void*)((char*)input_string + i);
-    int len = k;
-    out = (void*)((uint64_t *)out + 2 * i);
+__device__ void murmurhash3_x64_128(const void* key, const int len, const uint32_t seed, void* out) {
+
+    // show the key: string of characters
+    for (int i = 0; i < len; i++) {
+        printf("%c", ((char*)key)[i]);
+    }
+    printf("\n");
+    // show thread id
+    printf("Thread id: %d\n", threadIdx.x);
 
     const uint8_t* data = (const uint8_t*)key;
     const int nblocks = len / 16;
@@ -39,24 +48,24 @@ __global__ void hashKernel(const void* input_string, int k, uint32_t seed, void*
     const uint64_t* blocks = (const uint64_t*)(data);
 
     for (int i = 0; i < nblocks; i++) {
-        uint64_t k1 = blocks[i * 2 + 0];
-        uint64_t k2 = blocks[i * 2 + 1];
+        uint64_t k1 = getblock64(blocks, i * 2 + 0);
+        uint64_t k2 = getblock64(blocks, i * 2 + 1);
 
         k1 *= c1;
-        k1 = (k1 << 31) | (k1 >> (64 - 31));
+        k1 = rotateLeft(k1, 31);
         k1 *= c2;
         h1 ^= k1;
 
-        h1 = (h1 << 27) | (h1 >> (64 - 27));
+        h1 = rotateLeft(h1, 27);
         h1 += h2;
         h1 = h1 * 5 + 0x52dce729;
 
         k2 *= c2;
-        k2 = (k2 << 33) | (k2 >> (64 - 33));
+        k2 = rotateLeft(k2, 33);
         k2 *= c1;
         h2 ^= k2;
 
-        h2 = (h2 << 31) | (h2 >> (64 - 31));
+        h2 = rotateLeft(h2, 31);
         h2 += h1;
         h2 = h2 * 5 + 0x38495ab5;
     }
@@ -107,7 +116,14 @@ __global__ void hashKernel(const void* input_string, int k, uint32_t seed, void*
 
     ((uint64_t*)out)[0] = h1;
     ((uint64_t*)out)[1] = h2;
+}
 
+
+// Kernel function
+__global__ void hashKernel(const void* input_string, int k, uint32_t seed, void* out) {
+    // get the index of the thread, linear index of the thread in the thread block
+    int i = threadIdx.x;
+    murmurhash3_x64_128((char*)input_string + i, k, seed, (uint64_t*)out + 2*i);
 }
 
 // Host function to allocate memory and copy data
