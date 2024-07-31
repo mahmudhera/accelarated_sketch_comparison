@@ -104,26 +104,22 @@ void MurmurHash3_x64_128 ( const void * key, const int len,
 }
 
 int main() {
-    cout << "Test" << endl;
-    const char* s = "ACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAG";
-    int kmer_length = 21;
-    int num_kmers = strlen(s) - kmer_length + 1;
-    // create an array of of uint64_t, dimensions = num_kmers x 2
-    uint64_t *out = new uint64_t[2*num_kmers];
+  cout << "Test" << endl;
+  const char* s = "ACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAG";
+  int kmer_length = 21;
+  int num_kmers = strlen(s) - kmer_length + 1;
+  // create an array of of uint64_t, dimensions = num_kmers x 2
+  uint64_t *out = new uint64_t[2*num_kmers];
 
-    uint32_t seed = 0;
+  uint32_t seed = 0;
 
-    double start = clock();
-    int num_iters = 1000;
-    while (num_iters--) {
-        MurmurHash3_x64_128 (arr, sizeof(char)*8,
-                               seed, out);
-    }
-    double end = clock();
+  for (int i = 0; i < num_kmers; i++) {
+    MurmurHash3_x64_128(s+i, kmer_length, seed, out+2*i);
+  }
 
-    cout << "Time taken: " << (end - start)/CLOCKS_PER_SEC << endl;
-    
-    cout << out[0] << endl;
-    cout << out[1] << endl;
-    return 0;
+  for (int i = 0; i < num_kmers; i++) {
+    cout << out[2*i] << " " << out[2*i+1] << endl;
+  }
+  
+  return 0;
 }
