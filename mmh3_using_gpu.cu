@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstdint>
 #include <cstring>
+#include <ctime>
 
 __device__ uint64_t rotateLeft(uint64_t x, int r) {
     return (x << r) | (x >> (64 - r));
@@ -117,8 +118,15 @@ void hashOnGPU(const void* key, int len, uint32_t seed, void* out) {
 
     cudaMemcpy(d_key, key, len, cudaMemcpyHostToDevice);
 
-    // Correct syntax for kernel launch
-    hashKernel<<<1, 1>>>(d_key, len, seed, d_out);
+    // measure start and end time
+    double start_time = clock();
+    int num_iters = 1000;
+    while (num_iters--) {
+        hashKernel<<<1, 1>>>(d_key, len, seed, d_out);
+    }
+    double end_time = clock();
+
+    std::cout << "Time taken: " << (end_time - start_time) / CLOCKS_PER_SEC << std::endl;
 
     cudaMemcpy(out, d_out, 16, cudaMemcpyDeviceToHost);
 

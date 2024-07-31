@@ -1,4 +1,5 @@
 #include <iostream>
+#include <ctime>
 
 using namespace std;
 
@@ -108,8 +109,17 @@ int main() {
     int kmer_length = 8;
     uint64_t out[2] = {0};
     uint32_t seed = 0;
-    MurmurHash3_x64_128 (arr, sizeof(char)*8,
+
+    double start = clock();
+    int num_iters = 1000;
+    while (num_iters--) {
+        MurmurHash3_x64_128 (arr, sizeof(char)*8,
                                seed, out);
+    }
+    double end = clock();
+
+    cout << "Time taken: " << (end - start)/CLOCKS_PER_SEC << endl;
+    
     cout << out[0] << endl;
     cout << out[1] << endl;
     return 0;
