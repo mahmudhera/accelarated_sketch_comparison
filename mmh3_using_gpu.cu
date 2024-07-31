@@ -117,6 +117,11 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
     h1 += h2;
     h2 += h1;
 
+    if (threadIdx.x == 0) {
+        printf("h1: %lu\n", h1);
+        printf("h2: %lu\n", h2);
+    }
+
     ((uint64_t*)out)[0] = h1;
     ((uint64_t*)out)[1] = h2;
 }
