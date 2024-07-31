@@ -105,9 +105,12 @@ void MurmurHash3_x64_128 ( const void * key, const int len,
 
 int main() {
     cout << "Test" << endl;
-    char arr[100] = "ACGTGCAG";
-    int kmer_length = 8;
-    uint64_t out[2] = {0};
+    const char* s = "ACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAG";
+    int kmer_length = 21;
+    int num_kmers = strlen(s) - kmer_length + 1;
+    // create an array of of uint64_t, dimensions = num_kmers x 2
+    uint64_t *out = new uint64_t[2*num_kmers];
+
     uint32_t seed = 0;
 
     double start = clock();

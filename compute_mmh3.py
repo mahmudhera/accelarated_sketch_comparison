@@ -4,4 +4,4 @@ s = "ACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACG
 k = 21
 
 for i in range(len(s) - k + 1):
-    print(mmh3.hash(s[i:i+k]))
+    print(mmh3.hash64(s[i:i+k], signed=False))
