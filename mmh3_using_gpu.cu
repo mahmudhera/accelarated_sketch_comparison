@@ -132,6 +132,8 @@ __global__ void hashKernel(const void* input_string, int k, uint32_t seed, void*
     // get the index of the thread, linear index of the thread in the thread block
     int i = threadIdx.x;
     murmurhash3_x64_128((char*)input_string + i, k, seed, (uint64_t*)out + 2*i);
+    // wait for all threads to finish
+    __syncthreads();
 }
 
 // Host function to allocate memory and copy data
