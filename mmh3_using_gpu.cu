@@ -105,44 +105,55 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
 }
 
 // Kernel function
-__global__ void hashKernel(const void* key, int len, uint32_t seed, void* out) {
-    murmurhash3_x64_128(key, len, seed, out);
+__global__ void hashKernel(const void* input_string, int k, uint32_t seed, void* out) {
+    // get the index of the thread, linear index of the thread in the thread block
+    int i = threadIdx.x;
+    murmurhash3_x64_128((const char*)input_string + i, k, seed, out + 2*i);
 }
 
 // Host function to allocate memory and copy data
-void hashOnGPU(const void* key, int len, uint32_t seed, void* out) {
+// arguments: input_string, input_string_length, seed, out, k
+void hashOnGPU(const void* input_string, int input_string_length, uint32_t seed, void* out, int k) {
+    int num_kmers = input_string_length - k + 1;
+
+    // allocate memory on device
     void* d_key;
     void* d_out;
-    cudaMalloc(&d_key, len);
-    cudaMalloc(&d_out, 16); // 128-bit output
+    cudaMalloc(&d_key, input_string_length);
+    cudaMalloc(&d_out, sizeof(uint64_t) * 2 * num_kmers); // two 64-bit integers for each k-mer
 
+    // copy data to device
     cudaMemcpy(d_key, key, len, cudaMemcpyHostToDevice);
 
     // measure start and end time
     double start_time = clock();
-    int num_iters = 1000;
-    while (num_iters--) {
-        hashKernel<<<1, 1>>>(d_key, len, seed, d_out);
-    }
+    // call kernel function
+    hashKernel<<<1, num_kmers>>>(d_key, k, seed, d_out);
     double end_time = clock();
 
     std::cout << "Time taken: " << (end_time - start_time) / CLOCKS_PER_SEC << std::endl;
 
-    cudaMemcpy(out, d_out, 16, cudaMemcpyDeviceToHost);
+    // copy data back to host
+    cudaMemcpy(out, d_out, sizeof(uint64_t) * 2 * num_kmers, cudaMemcpyDeviceToHost);
 
+    // free memory
     cudaFree(d_key);
     cudaFree(d_out);
 }
 
 int main() {
-    const char* key = "ACGTGCAG";
-    int len = strlen(key);
+    const char* input_string = "ACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAG";
+    int input_string_length = strlen(key);
     uint32_t seed = 0;
-    uint64_t out[2];
+    int k = 21;
+    int num_kmers = input_string_length - k + 1;
+    uint64_t out[2*num_instances];
 
-    hashOnGPU(key, len, seed, out);
+    hashOnGPU(input_string, input_string_length, seed, out, k);
 
-    std::cout << "Hash: " << out[0] << std::endl << out[1] << std::endl;
+    for (int i = 0; i < num_kmers; i++) {
+        std::cout << out[2*i] << " " << out[2*i + 1] << std::endl;
+    }
 
     return 0;
 }
