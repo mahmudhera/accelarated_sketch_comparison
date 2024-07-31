@@ -108,7 +108,7 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
 __global__ void hashKernel(const void* input_string, int k, uint32_t seed, void* out) {
     // get the index of the thread, linear index of the thread in the thread block
     int i = threadIdx.x;
-    murmurhash3_x64_128((const char*)input_string + i, k, seed, out + 2*i);
+    murmurhash3_x64_128((const char*)input_string + i, k, seed, (uint64_t*)out + 2*i);
 }
 
 // Host function to allocate memory and copy data
