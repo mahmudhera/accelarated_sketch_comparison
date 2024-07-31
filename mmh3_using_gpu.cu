@@ -120,6 +120,7 @@ __global__ void hashKernel(const void* input_string, int k, uint32_t seed, void*
 // arguments: input_string, input_string_length, seed, out, k
 void hashOnGPU(const void* input_string, int input_string_length, uint32_t seed, void* out, int k) {
     int num_kmers = input_string_length - k + 1;
+    num_kmers = 1;
 
     // allocate memory on device
     void* d_key;
