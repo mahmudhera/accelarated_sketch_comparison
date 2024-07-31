@@ -151,7 +151,7 @@ void hashOnGPU(const void* input_string, int input_string_length, uint32_t seed,
 
 int main() {
     //const char* input_string = "ACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAG";
-    const char* input_string = "ACGTGCAGACGTGCAGACGTG";
+    const char* input_string = "ACGTGCAGACGTGCAGACGTGC";
     int input_string_length = strlen(input_string);
     uint32_t seed = 0;
     int k = 21;
