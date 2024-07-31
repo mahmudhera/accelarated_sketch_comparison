@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <cstring>
 #include <ctime>
+#include <unistd.h>
+
 
 __device__ uint64_t rotateLeft(uint64_t x, int r) {
     return (x << r) | (x >> (64 - r));
@@ -132,10 +134,13 @@ void hashOnGPU(const void* input_string, int input_string_length, uint32_t seed,
     hashKernel<<<1, num_kmers>>>(d_key, k, seed, d_out);
     // wait for the kernel to finish
     cudaDeviceSynchronize();
-    
+
     double end_time = clock();
 
     std::cout << "Time taken: " << (end_time - start_time) / CLOCKS_PER_SEC << std::endl;
+
+    // sleep for 1 second
+    sleep(1);
 
     // copy data back to host
     cudaMemcpy(out, d_out, sizeof(uint64_t) * 2 * num_kmers, cudaMemcpyDeviceToHost);
