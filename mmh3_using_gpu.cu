@@ -54,7 +54,7 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
 
     for (int i = 0; i < nblocks; i++) {
         if (threadIdx.x == 0) printf("Here X\n");
-        uint64_t k1 = getblock64(blocks, i * 2 + 0);
+        uint64_t k1 = blocks[i * 2 + 0];
         if (threadIdx.x == 0) printf("Here Y\n");
         uint64_t k2 = getblock64(blocks, i * 2 + 1);
 
