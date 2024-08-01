@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
     for (int i = 0; i < num_kmers; i++)
     {
         string kmer = sequence.substr(i, kmer_length);
-        cout << out[2 * i] << " " << out[2 * i + 1] << endl;
+        cout << kmer << " " << out[2 * i] << " " << out[2 * i + 1] << endl;
     }
 
     return 0;
