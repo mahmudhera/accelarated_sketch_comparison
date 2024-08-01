@@ -75,8 +75,6 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
         h2 = h2 * 5 + 0x38495ab5;
     }
 
-    if (threadIdx.x == 0) printf("Here\n");
-
     const uint8_t* tail = (const uint8_t*)(data + nblocks * 16);
 
     uint64_t k1 = 0;
