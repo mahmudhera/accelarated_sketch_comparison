@@ -170,7 +170,10 @@ void hashOnGPU(const void* input_string, int input_string_length, uint32_t seed,
     hashKernel<<<1, num_kmers>>>(d_key, k, seed, d_out);
 
     // wait for the kernel to finish
-    cudaDeviceSynchronize();
+    cudaError_t err = cudaDeviceSynchronize();
+    if (err != cudaSuccess) {
+        std::cerr << "Error: " << cudaGetErrorString(err) << std::endl;
+    }
 
     double end_time = clock();
 
