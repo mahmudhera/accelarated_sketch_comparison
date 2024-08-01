@@ -5,6 +5,7 @@
 #include <ctime>
 #include <unistd.h>
 #include <string>
+#include <fstream>
 
 using namespace std;
 
@@ -188,14 +189,47 @@ void hashOnGPU(const void* input_string, int input_string_length, uint32_t seed,
     cudaFree(d_out);
 }
 
-int main() {
-    const char* input_string = "ACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAGACGTGCAG";
-    //const char* input_string = "ACGTGCAGACGTGCAGACGTGC";
+
+
+void readFASTA(const std::string& filename, std::string& header, std::string& sequence) {
+    std::ifstream infile(filename);
+    if (!infile) {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return;
+    }
+
+    std::string line;
+    while (std::getline(infile, line)) {
+        if (line[0] == '>') {
+            header = line; // Store the header line
+        } else {
+            sequence += line; // Append to the sequence string
+        }
+    }
+    
+    infile.close();
+}
+
+
+
+int main(int argc, char* argv[]) { 
+    // first command line argument is the fasta filename
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <filename>" << std::endl;
+        return 1;
+    }
+
+    std::string filename = argv[1];
+    std::string header;
+    std::string sequence;
+
+    readFASTA(filename, header, sequence);
+
+    char* input_string = sequence.c_str();
     int input_string_length = strlen(input_string);
     uint32_t seed = 0;
     int k = 21;
     int num_kmers = input_string_length - k + 1;
-    //num_kmers = 2;
     uint64_t out[2*num_kmers];
 
     hashOnGPU(input_string, input_string_length, seed, out, k);
