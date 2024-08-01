@@ -204,7 +204,8 @@ int main(int argc, char* argv[]) {
     uint32_t seed = 0;
     int k = 21;
     int num_kmers = input_string_length - k + 1;
-    uint64_t out[2*num_kmers];
+    
+    uint64_t* out = new uint64_t[2 * num_kmers];
 
     hashOnGPU(input_string, input_string_length, seed, out, k);
     // wait for the kernel to finish
@@ -215,6 +216,8 @@ int main(int argc, char* argv[]) {
         string kmer = s.substr(i, k);
         std::cout << kmer << " " << out[2*i] << " " << out[2*i + 1] << std::endl;
     }
+
+    delete[] out;
 
     return 0;
 }
