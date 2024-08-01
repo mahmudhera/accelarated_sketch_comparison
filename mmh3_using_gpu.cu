@@ -31,17 +31,6 @@ __device__ uint64_t fmix64(uint64_t k) {
 
 __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32_t seed, void* out) {
 
-    // show the key: string of characters
-    if (threadIdx.x == 0) {
-        printf("Key: ");
-        for (int i = 0; i < len; i++) {
-            printf("%c", ((char*)key)[i]);
-        }
-        printf("\n");
-        // show thread id
-        printf("Thread id: %d\n", threadIdx.x);
-    }
-
     const uint8_t* data = (const uint8_t*)key;
     const int nblocks = len / 16;
 
@@ -53,12 +42,8 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
 
     const uint64_t* blocks = (const uint64_t*)(data);
 
-    if (threadIdx.x == 0) printf("Here A\n");
-
     for (int i = 0; i < nblocks; i++) {
-        if (threadIdx.x == 0) printf("Here X\n");
         uint64_t k1 = getblock64(blocks, i * 2 + 0);
-        if (threadIdx.x == 0) printf("Here Y\n");
         uint64_t k2 = getblock64(blocks, i * 2 + 1);
 
         k1 *= c1;
@@ -85,8 +70,7 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
     uint64_t k1 = 0;
     uint64_t k2 = 0;
 
-    if (threadIdx.x == 0) printf("Here B\n");
-
+    
     switch (len & 15) {
     case 15: k2 ^= ((uint64_t)tail[14]) << 48;
     case 14: k2 ^= ((uint64_t)tail[13]) << 40;
@@ -96,9 +80,7 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
     case 10: k2 ^= ((uint64_t)tail[9]) << 8;
     case 9: k2 ^= ((uint64_t)tail[8]) << 0;
         k2 *= c2;
-        if (threadIdx.x == 0) printf("Here C\n");
         k2 = rotateLeft(k2, 33);
-        if (threadIdx.x == 0) printf("Here D\n");
         k2 *= c1;
         h2 ^= k2;
 
@@ -116,8 +98,7 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
         h1 ^= k1;
     };
 
-    if (threadIdx.x == 0) printf("Here E\n");
-
+    
     h1 ^= len;
     h2 ^= len;
 
@@ -129,13 +110,6 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
 
     h1 += h2;
     h2 += h1;
-
-    if (threadIdx.x == 0) printf("Here F\n");
-
-    if (threadIdx.x == 0) {
-        printf("h1: %lu\n", h1);
-        printf("h2: %lu\n", h2);
-    }
 
     ((uint64_t*)out)[0] = h1;
     ((uint64_t*)out)[1] = h2;
