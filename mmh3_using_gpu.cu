@@ -14,7 +14,9 @@ __device__ uint64_t rotateLeft(uint64_t x, int r) {
 }
 
 __device__ uint64_t getblock64(const uint64_t* p, int i) {
-    return p[i];
+    uint8_t* pp = (uint8_t*)p;
+    // access 8 bytes at a time, then convert to 64-bit integer
+    return ((uint64_t)pp[i * 8 + 0] << 0) | ((uint64_t)pp[i * 8 + 1] << 8) | ((uint64_t)pp[i * 8 + 2] << 16) | ((uint64_t)pp[i * 8 + 3] << 24) | ((uint64_t)pp[i * 8 + 4] << 32) | ((uint64_t)pp[i * 8 + 5] << 40) | ((uint64_t)pp[i * 8 + 6] << 48) | ((uint64_t)pp[i * 8 + 7] << 56);
 }
 
 __device__ uint64_t fmix64(uint64_t k) {
@@ -54,7 +56,7 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
 
     for (int i = 0; i < nblocks; i++) {
         if (threadIdx.x == 0) printf("Here X\n");
-        uint64_t k1 = blocks[i * 2 + 0];
+        uint64_t k1 = getblock64(blocks, i * 2 + 0);
         if (threadIdx.x == 0) printf("Here Y\n");
         uint64_t k2 = getblock64(blocks, i * 2 + 1);
 
@@ -143,7 +145,6 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
 __global__ void hashKernel(const void* input_string, int k, uint32_t seed, void* out) {
     // get the index of the thread, linear index of the thread in the thread block
     int i = threadIdx.x;
-    if (i >= 1) return;
     murmurhash3_x64_128((char*)input_string + i, k, seed, (uint64_t*)out + 2*i);
     // wait for all threads to finish
 }
