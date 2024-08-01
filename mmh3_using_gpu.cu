@@ -50,7 +50,7 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
 
     const uint64_t* blocks = (const uint64_t*)(data);
 
-    if (threadIdx.x == 0) printf("Here\n");
+    if (threadIdx.x == 0) printf("Here A\n");
 
     for (int i = 0; i < nblocks; i++) {
         uint64_t k1 = getblock64(blocks, i * 2 + 0);
@@ -80,7 +80,7 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
     uint64_t k1 = 0;
     uint64_t k2 = 0;
 
-    if (threadIdx.x == 0) printf("Here2\n");
+    if (threadIdx.x == 0) printf("Here B\n");
 
     switch (len & 15) {
     case 15: k2 ^= ((uint64_t)tail[14]) << 48;
@@ -91,9 +91,9 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
     case 10: k2 ^= ((uint64_t)tail[9]) << 8;
     case 9: k2 ^= ((uint64_t)tail[8]) << 0;
         k2 *= c2;
-        if (threadIdx.x == 0) printf("Here\n");
+        if (threadIdx.x == 0) printf("Here C\n");
         k2 = rotateLeft(k2, 33);
-        if (threadIdx.x == 0) printf("Here\n");
+        if (threadIdx.x == 0) printf("Here D\n");
         k2 *= c1;
         h2 ^= k2;
 
@@ -111,7 +111,7 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
         h1 ^= k1;
     };
 
-    if (threadIdx.x == 0) printf("Here3\n");
+    if (threadIdx.x == 0) printf("Here E\n");
 
     h1 ^= len;
     h2 ^= len;
@@ -125,7 +125,7 @@ __device__ void murmurhash3_x64_128(const void* key, const int len, const uint32
     h1 += h2;
     h2 += h1;
 
-    if (threadIdx.x == 0) printf("Here\n");
+    if (threadIdx.x == 0) printf("Here F\n");
 
     if (threadIdx.x == 0) {
         printf("h1: %lu\n", h1);
