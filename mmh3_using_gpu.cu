@@ -225,7 +225,7 @@ int main(int argc, char* argv[]) {
 
     readFASTA(filename, header, sequence);
 
-    char* input_string = sequence.c_str();
+    const char* input_string = sequence.c_str();
     int input_string_length = strlen(input_string);
     uint32_t seed = 0;
     int k = 21;
