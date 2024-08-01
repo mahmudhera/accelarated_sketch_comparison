@@ -170,7 +170,7 @@ void hashOnGPU(const void *input_string, int input_string_length, uint32_t seed,
     double start_time = clock();
 
     // call kernel function
-    hashKernel <<<blocksPerGrid, threadsPerBlock>>> (d_key, k, seed, d_out);
+    hashKernel <<<blocksPerGrid, threadsPerBlock>>> (d_key, k, seed, d_out, num_kmers);
 
     // wait for the kernel to finish
     cudaError_t err = cudaDeviceSynchronize();
