@@ -244,12 +244,14 @@ int main(int argc, char *argv[])
     // wait for the kernel to finish
     cudaDeviceSynchronize();
 
+    /*
     std::ofstream outfile(out_filename);
     for (int i = 0; i < num_kmers; i++)
     {
         string kmer = sequence.substr(i, k);
         outfile << kmer << " " << out[2 * i] << " " << out[2 * i + 1] << std::endl;
     }
+    */
 
     delete[] out;
 
