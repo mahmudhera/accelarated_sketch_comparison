@@ -156,11 +156,20 @@ void hashOnGPU(const void *input_string, int input_string_length, uint32_t seed,
     // allocate memory on device
     void *d_key;
     void *d_out;
+
+    double time_snap = clock();
+
     cudaMalloc(&d_key, input_string_length);
     cudaMalloc(&d_out, sizeof(uint64_t) * 2 * num_kmers); // two 64-bit integers for each k-mer
 
+    double time_snap2 = clock();
+    std::cout << "Time taken for memory allocation: " << (time_snap2 - time_snap) / CLOCKS_PER_SEC << std::endl;
+
     // copy data to device
     cudaMemcpy(d_key, input_string, input_string_length, cudaMemcpyHostToDevice);
+
+    double time_snap3 = clock();
+    std::cout << "Time taken for copying data to device: " << (time_snap3 - time_snap2) / CLOCKS_PER_SEC << std::endl;
 
     // determine the number of threads per block, number of blocks
     int threadsPerBlock = 256;
@@ -181,14 +190,20 @@ void hashOnGPU(const void *input_string, int input_string_length, uint32_t seed,
 
     double end_time = clock();
 
-    std::cout << "Time taken: " << (end_time - start_time) / CLOCKS_PER_SEC << std::endl;
+    std::cout << "Time taken for the kernel to run: " << (end_time - start_time) / CLOCKS_PER_SEC << std::endl;
 
     // copy data back to host
     cudaMemcpy(out, d_out, sizeof(uint64_t) * 2 * num_kmers, cudaMemcpyDeviceToHost);
 
+    double time_snap4 = clock();
+    std::cout << "Time taken for copying data back to host: " << (time_snap4 - end_time) / CLOCKS_PER_SEC << std::endl;
+
     // free memory
     cudaFree(d_key);
     cudaFree(d_out);
+
+    double time_snap5 = clock();
+    std::cout << "Time taken for freeing memory: " << (time_snap5 - time_snap4) / CLOCKS_PER_SEC << std::endl;
 }
 
 void readFASTA(const std::string &filename, std::string &header, std::string &sequence)
