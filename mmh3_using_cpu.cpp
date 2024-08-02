@@ -165,13 +165,14 @@ void readFASTA(const std::string &filename, std::string &header, std::string &se
 int main(int argc, char *argv[])
 {
     // first command line argument is the fasta filename
-    if (argc != 2)
+    if (argc != 3)
     {
-        std::cerr << "Usage: " << argv[0] << " <filename>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <in_filename> <out_filename>" << std::endl;
         return 1;
     }
 
     std::string filename = argv[1];
+    std::string out_filename = argv[2];
     std::string header;
     std::string sequence;
 
@@ -195,10 +196,12 @@ int main(int argc, char *argv[])
 
     std::cout << "Time taken: " << (end_time - start_time) / CLOCKS_PER_SEC << std::endl;
 
+    // write the output to a file
+    std::ofstream outfile(out_filename);
     for (int i = 0; i < num_kmers; i++)
     {
         string kmer = sequence.substr(i, kmer_length);
-        cout << kmer << " " << out[2 * i] << " " << out[2 * i + 1] << endl;
+        outfile << kmer << " " << out[2 * i] << " " << out[2 * i + 1] << endl;
     }
 
     return 0;

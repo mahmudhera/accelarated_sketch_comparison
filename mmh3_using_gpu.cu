@@ -219,13 +219,14 @@ void readFASTA(const std::string &filename, std::string &header, std::string &se
 int main(int argc, char *argv[])
 {
     // first command line argument is the fasta filename
-    if (argc != 2)
+    if (argc != 3)
     {
-        std::cerr << "Usage: " << argv[0] << " <filename>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <in_filename> <out_filename>" << std::endl;
         return 1;
     }
 
     std::string filename = argv[1];
+    std::string out_filename = argv[2];
     std::string header;
     std::string sequence;
 
@@ -243,11 +244,11 @@ int main(int argc, char *argv[])
     // wait for the kernel to finish
     cudaDeviceSynchronize();
 
-    string s(input_string);
+    std::ofstream outfile(out_filename);
     for (int i = 0; i < num_kmers; i++)
     {
-        string kmer = s.substr(i, k);
-        std::cout << kmer << " " << out[2 * i] << " " << out[2 * i + 1] << std::endl;
+        string kmer = sequence.substr(i, k);
+        outfile << kmer << " " << out[2 * i] << " " << out[2 * i + 1] << std::endl;
     }
 
     delete[] out;
