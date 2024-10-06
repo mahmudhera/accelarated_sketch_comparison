@@ -196,14 +196,20 @@ int main() {
         randomInputLists.push_back(randomList);
     }
 
+    auto start1 = std::chrono::high_resolution_clock::now();
+
     // compute the bit representation using the function
     std::vector<std::vector<bool>> randomBitRepresentationUsingFunction = createBitRepresentation(randomInputLists);
+
+    auto end1 = std::chrono::high_resolution_clock::now();
 
     // compute the bit representation using brute force
     std::vector<std::vector<bool>> randomBitRepresentation;
     for (int i = 0; i < randomInputLists.size(); i++) {
         randomBitRepresentation.push_back(std::vector<bool>());
     }
+
+    auto start = std::chrono::high_resolution_clock::now();
 
     // create a set for the union of all the elements
     std::unordered_set<unsigned long long int> all_elements;
@@ -235,20 +241,9 @@ int main() {
         }
     }
 
-    // show the bit representation for the first list
-    std::cout << "Random bit representation using function: " << std::endl;
-    for (int i = 0; i < randomBitRepresentationUsingFunction[0].size(); i++) {
-        std::cout << randomBitRepresentationUsingFunction[0][i] << " ";
-    }
+    auto end = std::chrono::high_resolution_clock::now();
 
-    std::cout << std::endl;
-
-    std::cout << "Random bit representation using brute force: " << std::endl;
-    for (int i = 0; i < randomBitRepresentation[0].size(); i++) {
-        std::cout << randomBitRepresentation[0][i] << " ";
-    }
-
-    std::cout << std::endl;
+    
 
     // compare the two bit representations
     bool areEqual = true;
@@ -269,6 +264,10 @@ int main() {
     } else {
         std::cout << "The bit representations are not equal" << std::endl;
     }
+
+    std::cout << "Time taken by the function: " << std::chrono::duration_cast<std::chrono::milliseconds>(end1 - start1).count() << " milliseconds" << std::endl;
+
+    std::cout << "Time taken by brute force: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
 
     return 0;
