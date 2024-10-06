@@ -121,13 +121,20 @@ std::vector<std::vector<unsigned long long int>> computeIntersectionMatrix(const
         
         // get the lists that contain this element using the member_of list
         std::list<unsigned long int> list_ids_where_this_element_a_member = minElement->members_of;
+        std::vector<unsigned long long int> list_ids_where_this_element_a_member_vector(list_ids_where_this_element_a_member.begin(), list_ids_where_this_element_a_member.end());
         
         // for each list that contain this element
         for (unsigned long int i = 0; i < list_ids_where_this_element_a_member.size(); i++) {
+
+            unsigned long int list_id1 = list_ids_where_this_element_a_member_vector[i];
+
             // for each other list that contain this element
             for (unsigned long int j = i; j < list_ids_where_this_element_a_member.size(); j++) {
-                intersectionMatrix[list_ids_where_this_element_a_member[i]][list_ids_where_this_element_a_member[j]]++;
-                intersectionMatrix[list_ids_where_this_element_a_member[j]][list_ids_where_this_element_a_member[i]]++;
+
+                unsigned long int list_id2 = list_ids_where_this_element_a_member_vector[j];
+
+                intersectionMatrix[list_id1][list_id2]++;
+                intersectionMatrix[list_id2][list_id1]++;
             }
             
             // if the index is less than the size of the list, insert the element at that index into the heap
@@ -286,7 +293,7 @@ int main(int argc, char* argv[]) {
     std::vector<std::vector<unsigned long long int>> sketches = read_sketches(sketch_names);
 
     // create the bit representation
-    //std::vector<std::vector<bool>> bitRepresentation = createBitRepresentation(sketches);
+    std::vector<std::vector<bool>> bitRepresentation = createBitRepresentation(sketches);
 
     // create the intersection matrix
     std::vector<std::vector<unsigned long long int>> intersectionMatrix = computeIntersectionMatrix(sketches);
