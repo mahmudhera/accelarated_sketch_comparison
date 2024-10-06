@@ -94,6 +94,66 @@ public:
 
 
 
+std::vector<std::vector<unsigned long long int>> computeIntersectionMatrix(const std::vector<std::vector<unsigned long long int>>& inputLists) {
+    // create return list: an nxn matrix, where n is the number of input lists
+    std::vector<std::vector<unsigned long long int>> intersectionMatrix;
+    for (int i = 0; i < inputLists.size(); i++) {
+        intersectionMatrix.push_back(std::vector<unsigned long long int>(inputLists.size(), 0));
+    }
+
+    // create an array of indices to keep track of the current element of each list
+    std::vector<int> indices(inputLists.size(), 0);
+
+    // create a minheap to store the first element of all these lists
+    MinHeap minHeap;
+    for (int i = 0; i < inputLists.size(); i++) {
+        if (!inputLists[i].empty()) {
+            minHeap.insert(inputLists[i][0], i);
+            indices[i] = 1;
+        }
+    }
+
+    
+    // while the heap is not empty
+    while (!minHeap.isEmpty()) {
+        // pop the min element from the heap
+        HashValueMembersOf* minElement = minHeap.pop();
+        
+        // get the lists that contain this element using the member_of list
+        std::list<unsigned long int> list_ids_where_this_element_a_member = minElement->members_of;
+        
+        // for each list that contain this element
+        for (unsigned long int i = 0; i < list_ids_where_this_element_a_member.size(); i++) {
+            // for each other list that contain this element
+            for (unsigned long int j = i; j < list_ids_where_this_element_a_member.size(); j++) {
+                intersectionMatrix[list_ids_where_this_element_a_member[i]][list_ids_where_this_element_a_member[j]]++;
+                intersectionMatrix[list_ids_where_this_element_a_member[j]][list_ids_where_this_element_a_member[i]]++;
+            }
+            
+            // if the index is less than the size of the list, insert the element at that index into the heap
+            if (indices[i] < inputLists[i].size()) {
+                auto next_element = inputLists[i][indices[i]];
+                minHeap.insert(next_element, i);
+
+                // increment the index for that list
+                indices[i]++; 
+            }
+
+            
+        }
+
+        // delete the min element
+        delete minElement;
+
+    }
+
+    return intersectionMatrix;
+
+}
+
+
+
+
 std::vector<std::vector<bool>> createBitRepresentation(const std::vector<std::vector<unsigned long long int>>& inputLists) {
     // create return list
     std::vector<std::vector<bool>> bitRepresentation;
@@ -226,7 +286,10 @@ int main(int argc, char* argv[]) {
     std::vector<std::vector<unsigned long long int>> sketches = read_sketches(sketch_names);
 
     // create the bit representation
-    std::vector<std::vector<bool>> bitRepresentation = createBitRepresentation(sketches);
+    //std::vector<std::vector<bool>> bitRepresentation = createBitRepresentation(sketches);
+
+    // create the intersection matrix
+    std::vector<std::vector<unsigned long long int>> intersectionMatrix = computeIntersectionMatrix(sketches);
 
     auto end = std::chrono::high_resolution_clock::now();
 
@@ -239,3 +302,7 @@ int main(int argc, char* argv[]) {
     return 0;
 
 }
+
+
+
+// corresponding sourmash compare takes 7m 21s
