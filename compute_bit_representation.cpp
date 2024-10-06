@@ -5,6 +5,11 @@
 #include <queue>
 #include <algorithm>
 #include <unordered_set>
+#include <fstream>
+
+#include "json.hpp"
+
+using json = nlohmann::json;
 
 class HashValueMembersOf {
 public:
@@ -153,6 +158,35 @@ std::vector<std::vector<bool>> createBitRepresentation(const std::vector<std::ve
 
 
 
+
+
+std::vector<unsigned long long int> read_min_hashes(const std::string& json_filename) {
+    // Open the JSON file
+    std::ifstream inputFile(json_filename);
+
+    // Check if the file is open
+    if (!inputFile.is_open()) {
+        std::cerr << "Could not open the file!" << std::endl;
+        return {};
+    }
+
+    // Parse the JSON data
+    json jsonData;
+    inputFile >> jsonData;
+
+    // Access and print values
+    std::vector<unsigned long long int> min_hashes = jsonData[0]["signatures"][0]["mins"];
+
+    // Close the file
+    inputFile.close();
+
+    return min_hashes;
+}
+
+
+
+
+
 int main() {
     std::vector<std::vector<unsigned long long int>> inputLists = {
         {1, 2, 3, 4, 5},
@@ -182,93 +216,25 @@ int main() {
         std::cout << std::endl;
     }
 
+    // Open the JSON file
+    std::ifstream inputFile("sample_sketch.sig");
 
-    // create a 1000 lists of 10000-20000 elements randomly, element values in the range 0 to 2^32-1
-    std::vector<std::vector<unsigned long long int>> randomInputLists;
-    for (int i = 0; i < 1000; i++) {
-        std::vector<unsigned long long int> randomList;
-        int num_elements = 10000 + rand() % 10000;
-        for (int j = 0; j < num_elements; j++) {
-            randomList.push_back(rand() % 4294967296);
-        }
-        // sort the list
-        std::sort(randomList.begin(), randomList.end());
-        randomInputLists.push_back(randomList);
+    // Check if the file is open
+    if (!inputFile.is_open()) {
+        std::cerr << "Could not open the file!" << std::endl;
+        return 1;
     }
 
-    auto start1 = std::chrono::high_resolution_clock::now();
+    // read min hashes
+    std::vector<unsigned long long int> min_hashes = read_min_hashes("sample_sketch.sig");
 
-    // compute the bit representation using the function
-    std::vector<std::vector<bool>> randomBitRepresentationUsingFunction = createBitRepresentation(randomInputLists);
-
-    auto end1 = std::chrono::high_resolution_clock::now();
-
-    // compute the bit representation using brute force
-    std::vector<std::vector<bool>> randomBitRepresentation;
-    for (int i = 0; i < randomInputLists.size(); i++) {
-        randomBitRepresentation.push_back(std::vector<bool>());
+    // print the min hashes
+    std::cout << "Min hashes: " << std::endl;
+    for (int i = 0; i < min_hashes.size(); i++) {
+        std::cout << min_hashes[i] << " ";
     }
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    // create a set for the union of all the elements
-    std::unordered_set<unsigned long long int> all_elements;
-    for (int i = 0; i < randomInputLists.size(); i++) {
-        for (int j = 0; j < randomInputLists[i].size(); j++) {
-            all_elements.insert(randomInputLists[i][j]);
-        }
-    }
-
-    // create an array of the union of all the elements
-    std::vector<unsigned long long int> all_elements_array(all_elements.begin(), all_elements.end());
-
-    // show the number of elements in the union
-    std::cout << "Number of elements in the union: " << all_elements_array.size() << std::endl;
-
-    // sort the array
-    std::sort(all_elements_array.begin(), all_elements_array.end());
-
-    // for each list, create a bit representation
-    for (int i = 0; i < randomInputLists.size(); i++) {
-        int index = 0;
-        for (int j = 0; j < all_elements_array.size(); j++) {
-            if (index < randomInputLists[i].size() && randomInputLists[i][index] == all_elements_array[j]) {
-                randomBitRepresentation[i].push_back(1);
-                index++;
-            } else {
-                randomBitRepresentation[i].push_back(0);
-            }
-        }
-    }
-
-    auto end = std::chrono::high_resolution_clock::now();
-
-    
-
-    // compare the two bit representations
-    bool areEqual = true;
-    for (int i = 0; i < randomBitRepresentation.size(); i++) {
-        for (int j = 0; j < randomBitRepresentation[i].size(); j++) {
-            if (randomBitRepresentation[i][j] != randomBitRepresentationUsingFunction[i][j]) {
-                areEqual = false;
-                break;
-            }
-        }
-        if (!areEqual) {
-            break;
-        }
-    }
-
-    if (areEqual) {
-        std::cout << "The bit representations are equal" << std::endl;
-    } else {
-        std::cout << "The bit representations are not equal" << std::endl;
-    }
-
-    std::cout << "Time taken by the function: " << std::chrono::duration_cast<std::chrono::milliseconds>(end1 - start1).count() << " milliseconds" << std::endl;
-
-    std::cout << "Time taken by brute force: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
-
+    std::cout << std::endl;
 
     return 0;
+    
 }
