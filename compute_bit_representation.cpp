@@ -185,56 +185,57 @@ std::vector<unsigned long long int> read_min_hashes(const std::string& json_file
 
 
 
-
-
-int main() {
-    std::vector<std::vector<unsigned long long int>> inputLists = {
-        {1, 2, 3, 4, 5},
-        {2, 3, 4, 5, 6},
-        {3, 4, 5, 6, 7},
-        {4, 5, 6, 7, 8},
-        {5, 6, 7, 8, 9}
-    };
-
-    // print the input lists
-    std::cout << "Input lists: " << std::endl;
-    for (int i = 0; i < inputLists.size(); i++) {
-        for (int j = 0; j < inputLists[i].size(); j++) {
-            std::cout << inputLists[i][j] << " ";
-        }
-        std::cout << std::endl;
+std::vector<std::vector<unsigned long long int>> read_sketches(std::vector<std::string> sketch_names) {
+    std::vector<std::vector<unsigned long long int>> sketches;
+    for (const auto& sketch_name : sketch_names) {
+        std::vector<unsigned long long int> min_hashes = read_min_hashes(sketch_name);
+        sketches.push_back(min_hashes);
     }
+    return sketches;
+}
 
-    std::vector<std::vector<bool>> bitRepresentation = createBitRepresentation(inputLists);
 
-    std::cout << "Bit representation: " << std::endl;
 
-    for (int i = 0; i < bitRepresentation.size(); i++) {
-        for (int j = 0; j < bitRepresentation[i].size(); j++) {
-            std::cout << bitRepresentation[i][j] << " ";
-        }
-        std::cout << std::endl;
+std::vector<std::string> get_sketch_names(const std::string& filelist) {
+    // the filelist is a file, where each line is a path to a sketch file
+    std::ifstream file(filelist);
+    std::vector<std::string> sketch_names;
+    std::string line;
+    while (std::getline(file, line)) {
+        sketch_names.push_back(line);
     }
+    return sketch_names;
+}
 
-    // Open the JSON file
-    std::ifstream inputFile("sample_sketch.sig");
 
-    // Check if the file is open
-    if (!inputFile.is_open()) {
-        std::cerr << "Could not open the file!" << std::endl;
+
+int main(int argc, char* argv[]) {
+    
+    // command line arguments: filelist
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <filelist>" << std::endl;
         return 1;
     }
 
-    // read min hashes
-    std::vector<unsigned long long int> min_hashes = read_min_hashes("sample_sketch.sig");
+    auto start = std::chrono::high_resolution_clock::now();
 
-    // print the min hashes
-    std::cout << "Min hashes: " << std::endl;
-    for (int i = 0; i < min_hashes.size(); i++) {
-        std::cout << min_hashes[i] << " ";
-    }
-    std::cout << std::endl;
+    // get the sketch names
+    std::vector<std::string> sketch_names = get_sketch_names(argv[1]);
+
+    // read the sketches
+    std::vector<std::vector<unsigned long long int>> sketches = read_sketches(sketch_names);
+
+    // create the bit representation
+    std::vector<std::vector<bool>> bitRepresentation = createBitRepresentation(sketches);
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    // print the time required to create the bit representation
+    std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
+
+    // show the dimensions of the bit representation
+    std::cout << "Dimensions of the bit representation: " << bitRepresentation.size() << " x " << bitRepresentation[0].size() << std::endl;
 
     return 0;
-    
+
 }
