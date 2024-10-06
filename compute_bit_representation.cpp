@@ -306,6 +306,18 @@ int main(int argc, char* argv[]) {
     // show the dimensions of the bit representation
     std::cout << "Dimensions of the bit representation: " << bitRepresentation.size() << " x " << bitRepresentation[0].size() << std::endl;
 
+    // show the dimensions of the intersection matrix
+    std::cout << "Dimensions of the intersection matrix: " << intersectionMatrix.size() << " x " << intersectionMatrix[0].size() << std::endl;
+
+    // show first 10x10 elements of the intersection matrix
+    std::cout << "First 10x10 elements of the intersection matrix: " << std::endl;
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 10; j++) {
+            std::cout << intersectionMatrix[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+
     return 0;
 
 }
