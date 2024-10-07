@@ -152,6 +152,9 @@ std::vector<std::vector<unsigned long long int>> computeIntersectionMatrix(const
 
                 // increment the index for that list
                 indices[list_id1]++; 
+
+                std::cout << "Inserted " << next_element << " from list " << list_id1 << std::endl;
+
             }
 
             
