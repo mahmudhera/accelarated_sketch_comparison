@@ -128,8 +128,10 @@ std::vector<std::vector<unsigned long long int>> computeIntersectionMatrix(const
 
             unsigned long int list_id1 = list_ids_where_this_element_a_member_vector[i];
 
+            intersectionMatrix[list_id1][list_id1]++; // increment the intersection matrix for the same list
+
             // for each other list that contain this element
-            for (unsigned long int j = i; j < list_ids_where_this_element_a_member.size(); j++) {
+            for (unsigned long int j = i + 1; j < list_ids_where_this_element_a_member.size(); j++) {
 
                 unsigned long int list_id2 = list_ids_where_this_element_a_member_vector[j];
 
@@ -163,6 +165,10 @@ std::vector<std::vector<unsigned long long int>> computeIntersectionMatrix(const
             }
             std::cout << std::endl;
         }
+
+        // show the heap
+        std::cout << "Heap: " << std::endl;
+        minHeap.printHeap();
 
         // delete the min element
         delete minElement;
