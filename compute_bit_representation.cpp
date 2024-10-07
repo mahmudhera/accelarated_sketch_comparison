@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <fstream>
+#include <Eigen/Dense>
 
 #include "json.hpp"
 
@@ -387,6 +388,42 @@ int main(int argc, char* argv[]) {
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
 
+    // compute the bit representation
+    std::vector<std::vector<bool>> bitRepresentation = createBitRepresentation(sketches);
+
+    size_t num_rows = bitRepresentation.size();
+    size_t num_cols = bitRepresentation[0].size();
+
+    Eigen::MatrixXi A(rows, cols);
+
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            A(i, j) = bitRepresentation[i][j] ? 1 : 0;
+        }
+    }
+
+    Eigen::MatrixXi result = A * A.transpose();
+
+    // show first 10x10 elements of the result matrix, and of the intersection matrix
+    std::cout << "First 10x10 elements of the result matrix: " << std::endl;
+    smaller = std::min(10, (int)result.rows());
+    for (int i = 0; i < smaller; i++) {
+        for (int j = 0; j < smaller; j++) {
+            std::cout << result(i, j) << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    std::cout << "First 10x10 elements of the intersection matrix: " << std::endl;
+    smaller = std::min(10, (int)intersectionMatrix.size());
+    for (int i = 0; i < smaller; i++) {
+        for (int j = 0; j < smaller; j++) {
+            std::cout << intersectionMatrix[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+
+
     return 0;
 
 }
@@ -394,3 +431,4 @@ int main(int argc, char* argv[]) {
 
 
 // corresponding sourmash compare takes 7m 21s
+// our code: 204828 milliseconds
