@@ -149,6 +149,21 @@ std::vector<std::vector<unsigned long long int>> computeIntersectionMatrix(const
             
         }
 
+        // show the element and the intersection matrix for the current iteration
+        std::cout << "Element: " << minElement->key << std::endl;
+        std::cout << "Lists containing this element: ";
+        for (auto list_id : list_ids_where_this_element_a_member) {
+            std::cout << list_id << " ";
+        }
+
+        std::cout << "Intersection Matrix: " << std::endl;
+        for (int i = 0; i < intersectionMatrix.size(); i++) {
+            for (int j = 0; j < intersectionMatrix[i].size(); j++) {
+                std::cout << intersectionMatrix[i][j] << " ";
+            }
+            std::cout << std::endl;
+        }
+
         // delete the min element
         delete minElement;
 
