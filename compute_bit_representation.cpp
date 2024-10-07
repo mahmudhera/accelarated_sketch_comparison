@@ -334,8 +334,9 @@ int main(int argc, char* argv[]) {
 
     // show first 10x10 elements of the jaccard matrix
     std::cout << "First 10x10 elements of the jaccard matrix: " << std::endl;
-    for (int i = 0; i < 10; i++) {
-        for (int j = 0; j < 10; j++) {
+    int smaller = std::min(10, (int)jaccardMatrix.size());
+    for (int i = 0; i < smaller; i++) {
+        for (int j = 0; j < smaller; j++) {
             std::cout << jaccardMatrix[i][j] << " ";
         }
         std::cout << std::endl;
