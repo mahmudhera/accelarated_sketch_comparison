@@ -284,7 +284,15 @@ std::vector<std::vector<double>> compute_jaccard(std::vector<std::vector<unsigne
 
     for (int i = 0; i < intersectionMatrix.size(); i++) {
         for (int j = 0; j < intersectionMatrix.size(); j++) {
-            jaccardMatrix[i][j] = intersectionMatrix[i][j] / (sketches[i].size() + sketches[j].size() - intersectionMatrix[i][j]);
+            if (i == j) {
+                jaccardMatrix[i][j] = 1.0;
+                continue;
+            }
+            if ((sketches[i].size() + sketches[j].size() - intersectionMatrix[i][j]) == 0) {
+                jaccardMatrix[i][j] = 0.0;
+                continue;
+            } 
+            jaccardMatrix[i][j] = 1.0 * intersectionMatrix[i][j] / (sketches[i].size() + sketches[j].size() - intersectionMatrix[i][j]);
         }
     }
 
