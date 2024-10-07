@@ -127,20 +127,19 @@ std::vector<std::vector<unsigned long long int>> computeIntersectionMatrix(const
         HashValueMembersOf* minElement = minHeap.pop();
         
         // get the lists that contain this element using the member_of list
-        std::list<unsigned long int> list_ids_where_this_element_a_member = minElement->members_of;
-        std::vector<unsigned long long int> list_ids_where_this_element_a_member_vector(list_ids_where_this_element_a_member.begin(), list_ids_where_this_element_a_member.end());
+        std::vector<unsigned long int> list_ids_where_this_element_a_member = minElement->members_of;
         
         // for each list that contain this element
         for (unsigned long int i = 0; i < list_ids_where_this_element_a_member.size(); i++) {
 
-            unsigned long int list_id1 = list_ids_where_this_element_a_member_vector[i];
+            unsigned long int list_id1 = list_ids_where_this_element_a_member[i];
 
             intersectionMatrix[list_id1][list_id1]++; // increment the intersection matrix for the same list
 
             // for each other list that contain this element
             for (unsigned long int j = i + 1; j < list_ids_where_this_element_a_member.size(); j++) {
 
-                unsigned long int list_id2 = list_ids_where_this_element_a_member_vector[j];
+                unsigned long int list_id2 = list_ids_where_this_element_a_member[j];
 
                 intersectionMatrix[list_id1][list_id2]++;
                 intersectionMatrix[list_id2][list_id1]++;
