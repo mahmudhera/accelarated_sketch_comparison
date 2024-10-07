@@ -360,7 +360,7 @@ int main(int argc, char* argv[]) {
 
     // show first 10x10 elements of the jaccard matrix
     std::cout << "First 10x10 elements of the jaccard matrix: " << std::endl;
-    int smaller = std::min(10, (int)jaccardMatrix.size());
+    smaller = std::min(10, (int)jaccardMatrix.size());
     for (int i = 0; i < smaller; i++) {
         for (int j = 0; j < smaller; j++) {
             std::cout << jaccardMatrix[i][j] << " ";
