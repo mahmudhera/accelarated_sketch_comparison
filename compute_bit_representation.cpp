@@ -414,6 +414,41 @@ int main(int argc, char* argv[]) {
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
+
+
+    // for testing purposes, compute the intersection matrix using brute force
+    std::vector<std::vector<unsigned long long int>> intersectionMatrixBruteForce;
+    for (int i = 0; i < sketches.size(); i++) {
+        intersectionMatrixBruteForce.push_back(std::vector<unsigned long long int>(sketches.size(), 0));
+    }
+
+    for (int i = 0; i < sketches.size(); i++) {
+        for (int j = i; j < sketches.size(); j++) {
+            if (i == j) {
+                intersectionMatrixBruteForce[i][j] = sketches[i].size();
+                continue;
+            }
+            std::unordered_set<unsigned long long int> set1(sketches[i].begin(), sketches[i].end());
+            std::unordered_set<unsigned long long int> set2(sketches[j].begin(), sketches[j].end());
+            std::vector<unsigned long long int> intersection;
+            std::set_intersection(set1.begin(), set1.end(), set2.begin(), set2.end(), std::back_inserter(intersection));
+            intersectionMatrixBruteForce[i][j] = intersection.size();
+            intersectionMatrixBruteForce[j][i] = intersection.size();
+        }
+    }
+
+    // show the first 10x10 elements of the intersection matrix
+    std::cout << "First 10x10 elements of the intersection matrix (brute force): " << std::endl;
+    smaller = std::min(10, (int)intersectionMatrixBruteForce.size());
+    for (int i = 0; i < smaller; i++) {
+        for (int j = 0; j < smaller; j++) {
+            std::cout << intersectionMatrixBruteForce[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+    
+
+
     return 0;
 
 }
