@@ -229,7 +229,7 @@ std::vector<std::vector<bool>> createBitRepresentation(const std::vector<std::ve
         }
         
         // get the lists that contain this element using the member_of list
-        std::list<unsigned long int> list_ids_where_this_element_a_member = minElement->members_of;
+        std::vector<unsigned long int> list_ids_where_this_element_a_member = minElement->members_of;
         
         // for each list that contain this element
         for (auto list_id : list_ids_where_this_element_a_member) {
