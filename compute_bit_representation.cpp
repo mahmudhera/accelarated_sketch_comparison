@@ -276,10 +276,10 @@ std::vector<std::string> get_sketch_names(const std::string& filelist) {
 
 
 
-std::vector<std::vector<unsigned long long int>> compute_jaccard(std::vector<std::vector<unsigned long long int>> intersectionMatrix, std::vector<std::vector<unsigned long long int>> sketches) {
-    std::vector<std::vector<unsigned long long int>> jaccardMatrix;
+std::vector<std::vector<double>> compute_jaccard(std::vector<std::vector<unsigned long long int>> intersectionMatrix, std::vector<std::vector<unsigned long long int>> sketches) {
+    std::vector<std::vector<double>> jaccardMatrix;
     for (int i = 0; i < intersectionMatrix.size(); i++) {
-        jaccardMatrix.push_back(std::vector<unsigned long long int>(intersectionMatrix.size(), 0));
+        jaccardMatrix.push_back(std::vector<double>(intersectionMatrix.size(), 0.0));
     }
 
     for (int i = 0; i < intersectionMatrix.size(); i++) {
@@ -316,12 +316,7 @@ int main(int argc, char* argv[]) {
     std::vector<std::vector<unsigned long long int>> intersectionMatrix = computeIntersectionMatrix(sketches);
 
     // create the jaccard matrix
-    std::vector<std::vector<unsigned long long int>> jaccardMatrix = compute_jaccard(intersectionMatrix, sketches);
-
-    auto end = std::chrono::high_resolution_clock::now();
-
-    // print the time required to create the bit representation
-    std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
+    std::vector<std::vector<double>> jaccardMatrix = compute_jaccard(intersectionMatrix, sketches);
 
     // show the dimensions of the bit representation
     std::cout << "Dimensions of the bit representation: " << bitRepresentation.size() << " x " << bitRepresentation[0].size() << std::endl;
@@ -349,6 +344,9 @@ int main(int argc, char* argv[]) {
 
     // close the output file
     outputFile.close();
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
     return 0;
 
