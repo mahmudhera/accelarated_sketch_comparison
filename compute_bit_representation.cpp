@@ -423,6 +423,24 @@ int main(int argc, char* argv[]) {
         std::cout << std::endl;
     }
 
+    // test that the dimensions of the result matrix are the same as the intersection matrix
+    if (result.rows() != intersectionMatrix.size() || result.cols() != intersectionMatrix.size()) {
+        std::cerr << "Error: dimensions of the result matrix are not the same as the intersection matrix" << std::endl;
+        return 1;
+    }
+
+    // test that the result matrix is the same as the intersection matrix
+    for (int i = 0; i < result.rows(); i++) {
+        for (int j = 0; j < result.cols(); j++) {
+            if (result(i, j) != intersectionMatrix[i][j]) {
+                std::cerr << "Error: result matrix is not the same as the intersection matrix" << std::endl;
+                return 1;
+            }
+        }
+    }
+
+    std::cout << "Success: result matrix is the same as the intersection matrix" << std::endl;
+
 
     return 0;
 
