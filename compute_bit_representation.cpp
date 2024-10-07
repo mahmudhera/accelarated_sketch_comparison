@@ -140,9 +140,9 @@ std::vector<std::vector<unsigned long long int>> computeIntersectionMatrix(const
             }
             
             // if the index is less than the size of the list, insert the element at that index into the heap
-            if (indices[i] < inputLists[i].size()) {
-                auto next_element = inputLists[i][indices[i]];
-                minHeap.insert(next_element, i);
+            if (indices[list_id1] < inputLists[list_id1].size()) {
+                auto next_element = inputLists[list_id1][indices[i]];
+                minHeap.insert(next_element, list_id1);
 
                 // increment the index for that list
                 indices[i]++; 
