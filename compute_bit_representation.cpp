@@ -355,12 +355,6 @@ int main(int argc, char* argv[]) {
     // read the sketches
     std::vector<std::vector<unsigned long long int>> sketches = read_sketches(sketch_names);
 
-    // show the size of all the sketches
-    std::cout << "Size of all the sketches: " << sketches.size() << std::endl;
-    for (int i = 0; i < sketches.size(); i++) {
-        std::cout << "Size of sketch " << i << ": " << sketches[i].size() << std::endl;
-    }
-
     // create the bit representation
     std::vector<std::vector<bool>> bitRepresentation = createBitRepresentation(sketches);
 
