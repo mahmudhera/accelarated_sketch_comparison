@@ -151,6 +151,7 @@ std::vector<std::vector<unsigned long long int>> computeIntersectionMatrix(const
             
         }
 
+        /*
         // show the element and the intersection matrix for the current iteration
         std::cout << "Element: " << minElement->key << std::endl;
         std::cout << "Lists containing this element: ";
@@ -177,6 +178,7 @@ std::vector<std::vector<unsigned long long int>> computeIntersectionMatrix(const
         }
 
         std::cout << "----" << std::endl;
+        */
 
         // delete the min element
         delete minElement;
