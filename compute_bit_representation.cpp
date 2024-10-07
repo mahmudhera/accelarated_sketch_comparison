@@ -314,7 +314,7 @@ std::vector<std::string> get_sketch_names(const std::string& filelist) {
 
 
 
-std::vector<std::vector<double>> compute_jaccard(std::vector<std::vector<unsigned long long int>> intersectionMatrix, std::vector<std::vector<unsigned long long int>> sketches) {
+std::vector<std::vector<double>> compute_jaccard(std::vector<std::vector<unsigned long long int>> &intersectionMatrix) {
     std::vector<std::vector<double>> jaccardMatrix;
     for (int i = 0; i < intersectionMatrix.size(); i++) {
         jaccardMatrix.push_back(std::vector<double>(intersectionMatrix.size(), 0.0));
@@ -326,11 +326,11 @@ std::vector<std::vector<double>> compute_jaccard(std::vector<std::vector<unsigne
                 jaccardMatrix[i][j] = 1.0;
                 continue;
             }
-            if ((sketches[i].size() + sketches[j].size() - intersectionMatrix[i][j]) == 0) {
+            if ((intersectionMatrix[i][i] + intersectionMatrix[j][j] - intersectionMatrix[i][j]) == 0) {
                 jaccardMatrix[i][j] = 0.0;
                 continue;
             } 
-            jaccardMatrix[i][j] = 1.0 * intersectionMatrix[i][j] / (sketches[i].size() + sketches[j].size() - intersectionMatrix[i][j]);
+            jaccardMatrix[i][j] = 1.0 * intersectionMatrix[i][j] / (intersectionMatrix[i][i] + intersectionMatrix[j][j] - intersectionMatrix[i][j]);
         }
     }
 
@@ -359,7 +359,7 @@ int main(int argc, char* argv[]) {
     std::vector<std::vector<unsigned long long int>> intersectionMatrix = computeIntersectionMatrix(sketches);
 
     // create the jaccard matrix
-    std::vector<std::vector<double>> jaccardMatrix = compute_jaccard(intersectionMatrix, sketches);
+    std::vector<std::vector<double>> jaccardMatrix = compute_jaccard(intersectionMatrix);
 
     // show first 10x10 elements of the jaccard matrix
     std::cout << "First 10x10 elements of the jaccard matrix: " << std::endl;
