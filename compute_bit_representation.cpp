@@ -145,7 +145,7 @@ std::vector<std::vector<unsigned long long int>> computeIntersectionMatrix(const
                 minHeap.insert(next_element, list_id1);
 
                 // increment the index for that list
-                indices[i]++; 
+                indices[list_id1]++; 
             }
 
             
