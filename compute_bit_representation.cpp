@@ -388,6 +388,60 @@ int main(int argc, char* argv[]) {
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
 
+    // compute the bit representation
+    std::vector<std::vector<bool>> bitRepresentation = createBitRepresentation(sketches);
+
+    size_t num_rows = bitRepresentation.size();
+    size_t num_cols = bitRepresentation[0].size();
+
+    Eigen::MatrixXi A(num_rows, num_cols);
+
+    for (size_t i = 0; i < num_rows; ++i) {
+        for (size_t j = 0; j < num_cols; ++j) {
+            A(i, j) = bitRepresentation[i][j] ? 1 : 0;
+        }
+    }
+
+    Eigen::MatrixXi result = A * A.transpose();
+
+    // show first 10x10 elements of the result matrix, and of the intersection matrix
+    std::cout << "First 10x10 elements of the result matrix: " << std::endl;
+    smaller = std::min(10, (int)result.rows());
+    for (int i = 0; i < smaller; i++) {
+        for (int j = 0; j < smaller; j++) {
+            std::cout << result(i, j) << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    std::cout << "First 10x10 elements of the intersection matrix: " << std::endl;
+    smaller = std::min(10, (int)intersectionMatrix.size());
+    for (int i = 0; i < smaller; i++) {
+        for (int j = 0; j < smaller; j++) {
+            std::cout << intersectionMatrix[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    // test that the dimensions of the result matrix are the same as the intersection matrix
+    if (result.rows() != intersectionMatrix.size() || result.cols() != intersectionMatrix.size()) {
+        std::cerr << "Error: dimensions of the result matrix are not the same as the intersection matrix" << std::endl;
+        return 1;
+    }
+
+    // test that the result matrix is the same as the intersection matrix
+    for (int i = 0; i < result.rows(); i++) {
+        for (int j = 0; j < result.cols(); j++) {
+            if (result(i, j) != intersectionMatrix[i][j]) {
+                std::cerr << "Error: result matrix is not the same as the intersection matrix" << std::endl;
+                return 1;
+            }
+        }
+    }
+
+    std::cout << "Success: result matrix is the same as the intersection matrix" << std::endl;
+
+
     return 0;
 
 }
