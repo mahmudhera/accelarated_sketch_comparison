@@ -14,7 +14,7 @@ using json = nlohmann::json;
 class HashValueMembersOf {
 public:
     unsigned long long int key; // Key member variable
-    std::list<unsigned long int> members_of; // List of unsigned long integers
+    std::vector<unsigned long int> members_of; // List of unsigned long integers
 
     // Constructor to initialize key and optionally initialize the list
     HashValueMembersOf(unsigned long long int k, unsigned long int member) : key(k) {
@@ -82,6 +82,13 @@ public:
     // Print the entire heap (min-heap order cannot be guaranteed)
     void printHeap() {
         std::priority_queue<HashValueMembersOf*, std::vector<HashValueMembersOf*>, Compare> tempHeap = heap;
+        
+        std::cout << "Heap keys in lookup" << std::endl;
+        for (const auto& pair : lookup) {
+            std::cout << pair.first << " ";
+        }
+        std::cout << std::endl;
+
         std::cout << "Heap contents: " << std::endl;
         while (!tempHeap.empty()) {
             HashValueMembersOf* top = tempHeap.top();
@@ -151,7 +158,7 @@ std::vector<std::vector<unsigned long long int>> computeIntersectionMatrix(const
             
         }
 
-        /*
+        
         // show the element and the intersection matrix for the current iteration
         std::cout << "Element: " << minElement->key << std::endl;
         std::cout << "Lists containing this element: ";
@@ -178,7 +185,7 @@ std::vector<std::vector<unsigned long long int>> computeIntersectionMatrix(const
         }
 
         std::cout << "----" << std::endl;
-        */
+        
 
         // delete the min element
         delete minElement;
@@ -446,7 +453,7 @@ int main(int argc, char* argv[]) {
         }
         std::cout << std::endl;
     }
-    
+
 
 
     return 0;
