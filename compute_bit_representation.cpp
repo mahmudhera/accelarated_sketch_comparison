@@ -394,10 +394,10 @@ int main(int argc, char* argv[]) {
     size_t num_rows = bitRepresentation.size();
     size_t num_cols = bitRepresentation[0].size();
 
-    Eigen::MatrixXi A(rows, cols);
+    Eigen::MatrixXi A(num_rows, num_cols);
 
-    for (size_t i = 0; i < rows; ++i) {
-        for (size_t j = 0; j < cols; ++j) {
+    for (size_t i = 0; i < num_rows; ++i) {
+        for (size_t j = 0; j < num_cols; ++j) {
             A(i, j) = bitRepresentation[i][j] ? 1 : 0;
         }
     }
