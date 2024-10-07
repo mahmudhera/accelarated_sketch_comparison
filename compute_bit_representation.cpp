@@ -317,6 +317,12 @@ int main(int argc, char* argv[]) {
     // read the sketches
     std::vector<std::vector<unsigned long long int>> sketches = read_sketches(sketch_names);
 
+    // show the size of all the sketches
+    std::cout << "Size of all the sketches: " << sketches.size() << std::endl;
+    for (int i = 0; i < sketches.size(); i++) {
+        std::cout << "Size of sketch " << i << ": " << sketches[i].size() << std::endl;
+    }
+
     // create the bit representation
     std::vector<std::vector<bool>> bitRepresentation = createBitRepresentation(sketches);
 
@@ -331,6 +337,26 @@ int main(int argc, char* argv[]) {
 
     // show the dimensions of the jaccard matrix
     std::cout << "Dimensions of the jaccard matrix: " << jaccardMatrix.size() << " x " << jaccardMatrix[0].size() << std::endl;
+
+    // show the first 10 elements of the bit representation
+    std::cout << "First 10 elements of the bit representation: " << std::endl;
+    int smaller = std::min(10, (int)bitRepresentation[0].size());
+    for (int i = 0; i < bitRepresentation.size(); i++) {
+        for (int j = 0; j < smaller; j++) {
+            std::cout << bitRepresentation[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    // show the first 10x10 elements of the intersection matrix
+    std::cout << "First 10x10 elements of the intersection matrix: " << std::endl;
+    smaller = std::min(10, (int)intersectionMatrix.size());
+    for (int i = 0; i < smaller; i++) {
+        for (int j = 0; j < smaller; j++) {
+            std::cout << intersectionMatrix[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
 
     // show first 10x10 elements of the jaccard matrix
     std::cout << "First 10x10 elements of the jaccard matrix: " << std::endl;
