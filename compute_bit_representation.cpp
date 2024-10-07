@@ -276,11 +276,28 @@ std::vector<std::string> get_sketch_names(const std::string& filelist) {
 
 
 
+std::vector<std::vector<unsigned long long int>> compute_jaccard(std::vector<std::vector<unsigned long long int>> intersectionMatrix, std::vector<std::vector<unsigned long long int>> sketches) {
+    std::vector<std::vector<unsigned long long int>> jaccardMatrix;
+    for (int i = 0; i < intersectionMatrix.size(); i++) {
+        jaccardMatrix.push_back(std::vector<unsigned long long int>(intersectionMatrix.size(), 0));
+    }
+
+    for (int i = 0; i < intersectionMatrix.size(); i++) {
+        for (int j = 0; j < intersectionMatrix.size(); j++) {
+            jaccardMatrix[i][j] = intersectionMatrix[i][j] / (sketches[i].size() + sketches[j].size() - intersectionMatrix[i][j]);
+        }
+    }
+
+    return jaccardMatrix;
+}
+
+
+
 int main(int argc, char* argv[]) {
     
-    // command line arguments: filelist
-    if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " <filelist>" << std::endl;
+    // command line arguments: filelist outputfile
+    if (argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " filelist outputfile" << std::endl;
         return 1;
     }
 
@@ -298,6 +315,9 @@ int main(int argc, char* argv[]) {
     // create the intersection matrix
     std::vector<std::vector<unsigned long long int>> intersectionMatrix = computeIntersectionMatrix(sketches);
 
+    // create the jaccard matrix
+    std::vector<std::vector<unsigned long long int>> jaccardMatrix = compute_jaccard(intersectionMatrix, sketches);
+
     auto end = std::chrono::high_resolution_clock::now();
 
     // print the time required to create the bit representation
@@ -306,17 +326,29 @@ int main(int argc, char* argv[]) {
     // show the dimensions of the bit representation
     std::cout << "Dimensions of the bit representation: " << bitRepresentation.size() << " x " << bitRepresentation[0].size() << std::endl;
 
-    // show the dimensions of the intersection matrix
-    std::cout << "Dimensions of the intersection matrix: " << intersectionMatrix.size() << " x " << intersectionMatrix[0].size() << std::endl;
+    // show the dimensions of the jaccard matrix
+    std::cout << "Dimensions of the jaccard matrix: " << jaccardMatrix.size() << " x " << jaccardMatrix[0].size() << std::endl;
 
-    // show first 10x10 elements of the intersection matrix
-    std::cout << "First 10x10 elements of the intersection matrix: " << std::endl;
+    // show first 10x10 elements of the jaccard matrix
+    std::cout << "First 10x10 elements of the jaccard matrix: " << std::endl;
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 10; j++) {
-            std::cout << intersectionMatrix[i][j] << " ";
+            std::cout << jaccardMatrix[i][j] << " ";
         }
         std::cout << std::endl;
     }
+
+    // write the jaccard matrix to the output file
+    std::ofstream outputFile(argv[2]);
+    for (int i = 0; i < jaccardMatrix.size(); i++) {
+        for (int j = 0; j < jaccardMatrix[i].size(); j++) {
+            outputFile << jaccardMatrix[i][j] << " ";
+        }
+        outputFile << std::endl;
+    }
+
+    // close the output file
+    outputFile.close();
 
     return 0;
 
