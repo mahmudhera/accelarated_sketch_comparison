@@ -170,6 +170,14 @@ std::vector<std::vector<unsigned long long int>> computeIntersectionMatrix(const
         std::cout << "Heap: " << std::endl;
         minHeap.printHeap();
 
+        // show the indices array
+        std::cout << "Indices: ";
+        for (auto index : indices) {
+            std::cout << index << " ";
+        }
+
+        std::cout << "----" << std::endl;
+
         // delete the min element
         delete minElement;
 
