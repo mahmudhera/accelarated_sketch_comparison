@@ -120,6 +120,10 @@ std::vector<std::vector<unsigned long long int>> computeIntersectionMatrix(const
         }
     }
 
+    // show the heap
+    std::cout << "Heap before starting: " << std::endl;
+    minHeap.printHeap();
+
     
     // while the heap is not empty
     while (!minHeap.isEmpty()) {
@@ -147,7 +151,7 @@ std::vector<std::vector<unsigned long long int>> computeIntersectionMatrix(const
             
             // if the index is less than the size of the list, insert the element at that index into the heap
             if (indices[list_id1] < inputLists[list_id1].size()) {
-                auto next_element = inputLists[list_id1][indices[i]];
+                auto next_element = inputLists[list_id1][indices[list_id1]];
                 minHeap.insert(next_element, list_id1);
 
                 // increment the index for that list
