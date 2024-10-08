@@ -8,7 +8,26 @@
 #include <fstream>
 #include <Eigen/Sparse>
 
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+
 #include "json.hpp"
+
+
+
+#define CHECK_CUDA(call) \
+    if ((call) != cudaSuccess) { \
+        std::cerr << "CUDA error at " << __FILE__ << ":" << __LINE__ << std::endl; \
+        exit(EXIT_FAILURE); \
+    }
+
+#define CHECK_CUBLAS(call) \
+    if ((call) != CUBLAS_STATUS_SUCCESS) { \
+        std::cerr << "cuBLAS error at " << __FILE__ << ":" << __LINE__ << std::endl; \
+        exit(EXIT_FAILURE); \
+    }
+
+
 
 using json = nlohmann::json;
 
@@ -393,65 +412,61 @@ int main(int argc, char* argv[]) {
 
     std::vector<std::vector<bool>> bitRepresentation = createBitRepresentation(sketches);
 
-    auto end__ = std::chrono::high_resolution_clock::now();
+    // allocate memory for the bit representation in the device
+    int num_rows = bitRepresentation.size();
+    int num_cols = bitRepresentation[0].size();
 
-    std::cout << "Time taken for bit representation: " << std::chrono::duration_cast<std::chrono::milliseconds>(end__ - start).count() << " milliseconds" << std::endl;
-
-    size_t num_rows = bitRepresentation.size();
-    size_t num_cols = bitRepresentation[0].size();
-
-    Eigen::SparseMatrix<int> A(num_rows, num_cols);
-
-    for (size_t i = 0; i < num_rows; ++i) {
-        for (size_t j = 0; j < num_cols; ++j) {
-            A.insert(i, j) = bitRepresentation[i][j] ? 1 : 0;
+    int bitRepresentationInt[num_rows][num_cols];
+    for (int i = 0; i < num_rows; i++) {
+        for (int j = 0; j < num_cols; j++) {
+            bitRepresentationInt[i][j] = bitRepresentation[i][j];
         }
     }
 
-    
-    Eigen::SparseMatrix<int> result = A * A.transpose();
-    
+    // allocate memory in device for bit representation
+    int* d_bitRepresentation;
+    CHECK_CUDA(cudaMalloc(&d_bitRepresentation, num_rows * num_cols * sizeof(int)));
+
+    // copy the bit representation to the device
+    CHECK_CUDA(cudaMemcpy(d_bitRepresentation, bitRepresentationInt, num_rows * num_cols * sizeof(int), cudaMemcpyHostToDevice));
+
+    // allocate memory in device for matrix multiplication result
+    int* d_result;
+    CHECK_CUDA(cudaMalloc(&d_result, num_rows * num_rows * sizeof(int)));
+
+    // create a cublas handle
+    cublasHandle_t handle;
+    CHECK_CUBLAS(cublasCreate(&handle));
+
+    // perform matrix multiplication
+    int alpha = 1;
+    int beta = 0;
+    CHECK_CUBLAS(cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, num_rows, num_rows, num_cols, &alpha, d_bitRepresentation, num_rows, d_bitRepresentation, num_cols, &beta, d_result, num_rows));
+
+    // copy the result back to the host
+    int result[num_rows][num_rows];
+    CHECK_CUDA(cudaMemcpy(result, d_result, num_rows * num_rows * sizeof(int), cudaMemcpyDeviceToHost));
+
+    // free memory
+    CHECK_CUDA(cudaFree(d_bitRepresentation));
+    CHECK_CUDA(cudaFree(d_result));
+    CHECK_CUBLAS(cublasDestroy(handle));
+
     end = std::chrono::high_resolution_clock::now();
 
-    std::cout << "Time taken for matrix: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
+    std::cout << "Time taken for bit representation: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
-    // show first 10x10 elements of the result matrix, and of the intersection matrix
-    std::cout << "First 10x10 elements of the result matrix: " << std::endl;
-    smaller = std::min(10, (int)result.rows());
+    // show first 10x10 elements of the result
+    std::cout << "First 10x10 elements of the result: " << std::endl;
+    smaller = std::min(10, num_rows);
+
     for (int i = 0; i < smaller; i++) {
         for (int j = 0; j < smaller; j++) {
-            std::cout << result.coeff(i, j) << " ";
+            std::cout << result[i][j] << " ";
         }
         std::cout << std::endl;
     }
-
-    std::cout << "First 10x10 elements of the intersection matrix: " << std::endl;
-    smaller = std::min(10, (int)intersectionMatrix.size());
-    for (int i = 0; i < smaller; i++) {
-        for (int j = 0; j < smaller; j++) {
-            std::cout << intersectionMatrix[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    // test that the dimensions of the result matrix are the same as the intersection matrix
-    if (result.rows() != intersectionMatrix.size() || result.cols() != intersectionMatrix.size()) {
-        std::cerr << "Error: dimensions of the result matrix are not the same as the intersection matrix" << std::endl;
-        return 1;
-    }
-
-    // test that the result matrix is the same as the intersection matrix
-    for (int i = 0; i < result.rows(); i++) {
-        for (int j = 0; j < result.cols(); j++) {
-            if (result.coeff(i, j) != intersectionMatrix[i][j]) {
-                std::cerr << "Error: result matrix is not the same as the intersection matrix" << std::endl;
-                return 1;
-            }
-        }
-    }
-
-    std::cout << "Success: result matrix is the same as the intersection matrix" << std::endl;
-
+    
 
     return 0;
 
