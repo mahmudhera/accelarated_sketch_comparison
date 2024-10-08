@@ -393,6 +393,10 @@ int main(int argc, char* argv[]) {
 
     std::vector<std::vector<bool>> bitRepresentation = createBitRepresentation(sketches);
 
+    auto end__ = std::chrono::high_resolution_clock::now();
+
+    std::cout << "Time taken for bit representation: " << std::chrono::duration_cast<std::chrono::milliseconds>(end__ - start).count() << " milliseconds" << std::endl;
+
     size_t num_rows = bitRepresentation.size();
     size_t num_cols = bitRepresentation[0].size();
 
