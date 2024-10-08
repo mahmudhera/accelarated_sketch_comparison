@@ -389,6 +389,8 @@ int main(int argc, char* argv[]) {
 
 
     // compute the bit representation
+    start = std::chrono::high_resolution_clock::now();
+
     std::vector<std::vector<bool>> bitRepresentation = createBitRepresentation(sketches);
 
     size_t num_rows = bitRepresentation.size();
@@ -402,7 +404,12 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    
     Eigen::MatrixXi result = A * A.transpose();
+    
+    end = std::chrono::high_resolution_clock::now();
+
+    std::cout << "Time taken for matrix: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
     // show first 10x10 elements of the result matrix, and of the intersection matrix
     std::cout << "First 10x10 elements of the result matrix: " << std::endl;
