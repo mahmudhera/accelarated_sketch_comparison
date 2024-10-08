@@ -333,8 +333,3 @@ int main(int argc, char* argv[]) {
     return 0;
 
 }
-
-
-
-// corresponding sourmash compare takes 7m 21s
-// our code: 204828 milliseconds
