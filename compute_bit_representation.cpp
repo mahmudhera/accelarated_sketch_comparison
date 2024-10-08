@@ -404,7 +404,7 @@ int main(int argc, char* argv[]) {
 
     for (size_t i = 0; i < num_rows; ++i) {
         for (size_t j = 0; j < num_cols; ++j) {
-            A(i, j) = bitRepresentation[i][j] ? 1 : 0;
+            A.insert(i, j) = bitRepresentation[i][j] ? 1 : 0;
         }
     }
 
@@ -420,7 +420,7 @@ int main(int argc, char* argv[]) {
     smaller = std::min(10, (int)result.rows());
     for (int i = 0; i < smaller; i++) {
         for (int j = 0; j < smaller; j++) {
-            std::cout << result(i, j) << " ";
+            std::cout << result.coeff(i, j) << " ";
         }
         std::cout << std::endl;
     }
@@ -443,7 +443,7 @@ int main(int argc, char* argv[]) {
     // test that the result matrix is the same as the intersection matrix
     for (int i = 0; i < result.rows(); i++) {
         for (int j = 0; j < result.cols(); j++) {
-            if (result(i, j) != intersectionMatrix[i][j]) {
+            if (result.coeff(i, j) != intersectionMatrix[i][j]) {
                 std::cerr << "Error: result matrix is not the same as the intersection matrix" << std::endl;
                 return 1;
             }
