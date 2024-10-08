@@ -423,49 +423,58 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // allocate memory in device for bit representation
-    int* d_bitRepresentation;
-    CHECK_CUDA(cudaMalloc(&d_bitRepresentation, num_rows * num_cols * sizeof(int)));
+    float* h_A = (float*)malloc(num_rows * num_cols * sizeof(float));
+    for (int i = 0; i < num_rows; i++) {
+        for (int j = 0; j < num_cols; j++) {
+            h_A[i * num_cols + j] = (int)bitRepresentationInt[i][j];
+        }
+    }
 
-    // copy the bit representation to the device
-    CHECK_CUDA(cudaMemcpy(d_bitRepresentation, bitRepresentationInt, num_rows * num_cols * sizeof(int), cudaMemcpyHostToDevice));
+    float* d_A;
+    CHECK_CUDA(cudaMalloc(&d_A, num_rows * num_cols * sizeof(float)));
+    CHECK_CUDA(cudaMemcpy(d_A, h_A, num_rows * num_cols * sizeof(float), cudaMemcpyHostToDevice));
 
-    // allocate memory in device for matrix multiplication result
-    int* d_result;
-    CHECK_CUDA(cudaMalloc(&d_result, num_rows * num_rows * sizeof(int)));
+    // copy h_A to d_A
+    CHECK_CUDA(cudaMemcpy(d_A, h_A, num_rows * num_cols * sizeof(float), cudaMemcpyHostToDevice));
 
-    // create a cublas handle
+    // multiply d_A with d_A transpose
+    float* d_C;
+    CHECK_CUDA(cudaMalloc(&d_C, num_rows * num_rows * sizeof(float)));
+
     cublasHandle_t handle;
     CHECK_CUBLAS(cublasCreate(&handle));
 
-    // perform matrix multiplication
-    int alpha = 1;
-    int beta = 0;
-    CHECK_CUBLAS(cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, num_rows, num_rows, num_cols, &alpha, d_bitRepresentation, num_rows, d_bitRepresentation, num_cols, &beta, d_result, num_rows));
+    float alpha = 1.0;
+    float beta = 0.0;
 
-    // copy the result back to the host
-    int result[num_rows][num_rows];
-    CHECK_CUDA(cudaMemcpy(result, d_result, num_rows * num_rows * sizeof(int), cudaMemcpyDeviceToHost));
+    CHECK_CUBLAS(cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, num_rows, num_rows, num_cols, &alpha, d_A, num_rows, d_A, num_rows, &beta, d_C, num_rows));
+
+    // copy d_C to h_C
+    float* h_C = (float*)malloc(num_rows * num_rows * sizeof(float));
+    CHECK_CUDA(cudaMemcpy(h_C, d_C, num_rows * num_rows * sizeof(float), cudaMemcpyDeviceToHost));
+
+    // show first 10x10 elements of the h_C matrix
+    std::cout << "First 10x10 elements of the h_C matrix: " << std::endl;
+    smaller = std::min(10, num_rows);
+    for (int i = 0; i < smaller; i++) {
+        for (int j = 0; j < smaller; j++) {
+            std::cout << h_C[i * num_rows + j] << " ";
+        }
+        std::cout << std::endl;
+    }
 
     // free memory
-    CHECK_CUDA(cudaFree(d_bitRepresentation));
-    CHECK_CUDA(cudaFree(d_result));
+    free(h_A);
+    free(h_C);
+    CHECK_CUDA(cudaFree(d_A));
+    CHECK_CUDA(cudaFree(d_C));
     CHECK_CUBLAS(cublasDestroy(handle));
 
     end = std::chrono::high_resolution_clock::now();
 
-    std::cout << "Time taken for bit representation: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
+    std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
-    // show first 10x10 elements of the result
-    std::cout << "First 10x10 elements of the result: " << std::endl;
-    smaller = std::min(10, num_rows);
 
-    for (int i = 0; i < smaller; i++) {
-        for (int j = 0; j < smaller; j++) {
-            std::cout << result[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
     
 
     return 0;
