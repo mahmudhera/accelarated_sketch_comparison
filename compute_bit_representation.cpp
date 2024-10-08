@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <fstream>
-#include <Eigen/Dense>
+#include <Eigen/Sparse>
 
 #include "json.hpp"
 
@@ -400,7 +400,7 @@ int main(int argc, char* argv[]) {
     size_t num_rows = bitRepresentation.size();
     size_t num_cols = bitRepresentation[0].size();
 
-    Eigen::MatrixXi A(num_rows, num_cols);
+    Eigen::SparseMatrix<int> A(num_rows, num_cols);
 
     for (size_t i = 0; i < num_rows; ++i) {
         for (size_t j = 0; j < num_cols; ++j) {
@@ -409,7 +409,7 @@ int main(int argc, char* argv[]) {
     }
 
     
-    Eigen::MatrixXi result = A * A.transpose();
+    Eigen::SparseMatrix<int> result = A * A.transpose();
     
     end = std::chrono::high_resolution_clock::now();
 
