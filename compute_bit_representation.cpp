@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <unordered_set>
 #include <fstream>
-#include <Eigen/Sparse>
 
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
