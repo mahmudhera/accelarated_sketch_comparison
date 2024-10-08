@@ -11,6 +11,7 @@
 
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
+#include <chrono>
 
 #define CHECK_CUDA(call) \
     if ((call) != cudaSuccess) { \
