@@ -281,10 +281,11 @@ int main(int argc, char* argv[]) {
     size_t num_rows = bitRepresentation.size();
     size_t num_cols = bitRepresentation[0].size();
 
-    float h_A [num_rows][num_cols];
+    float *h_A = new float[num_rows * num_cols];
+    // store the bit representation in the matrix in column-major order
     for (int i = 0; i < num_rows; i++) {
         for (int j = 0; j < num_cols; j++) {
-            h_A[i][j] = bitRepresentation[i][j];
+            h_A[j * num_rows + i] = bitRepresentation[i][j];
         }
     }
 
@@ -300,7 +301,8 @@ int main(int argc, char* argv[]) {
     CHECK_CUBLAS(cublasCreate(&handle));
 
     // create a matrix of size num_rows x num_rows to store the dot products
-    float h_C[num_rows][num_rows];
+    float *h_C;
+    h_C = new float[num_rows * num_rows];
     float *d_C;
     CHECK_CUDA(cudaMalloc(&d_C, num_rows * num_rows * sizeof(float)));
 
@@ -315,14 +317,26 @@ int main(int argc, char* argv[]) {
     // free the memory
     CHECK_CUDA(cudaFree(d_A));
     CHECK_CUDA(cudaFree(d_C));
-
+    
     // destroy the handle
     CHECK_CUBLAS(cublasDestroy(handle));
+
+    // the result h_C is in column-major order, convert it to a 2D float matrix
+    float results[num_rows][num_rows];
+    for (int i = 0; i < num_rows; i++) {
+        for (int j = 0; j < num_rows; j++) {
+            results[i][j] = h_C[j * num_rows + i];
+        }
+    }
+
+    // delete the host memory
+    delete[] h_A;
+    delete[] h_C;
 
     // show the result, first 10x10
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 10; j++) {
-            std::cout << h_C[i][j] << " ";
+            std::cout << result[i][j] << " ";
         }
         std::cout << std::endl;
     }
