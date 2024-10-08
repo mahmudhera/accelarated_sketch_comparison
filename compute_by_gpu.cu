@@ -302,7 +302,7 @@ int main(int argc, char* argv[]) {
     // create a matrix of size num_rows x num_rows to store the dot products
     float h_C[num_rows][num_rows];
     float *d_C;
-    CHECK_CUDA(cudaMalloc(&d_C, num_rows * num_rows * sizeof(float));
+    CHECK_CUDA(cudaMalloc(&d_C, num_rows * num_rows * sizeof(float)));
 
     // compute A * A^T
     float alpha = 1.0;
