@@ -9,9 +9,6 @@
 
 #include <Eigen/Dense>
 
-#include <cuda_runtime.h>
-#include <cublas_v2.h>
-
 #include "json.hpp"
 
 
