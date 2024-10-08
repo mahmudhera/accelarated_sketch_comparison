@@ -7,8 +7,6 @@
 #include <unordered_set>
 #include <fstream>
 
-#include <Eigen/Dense>
-
 #include "json.hpp"
 
 
