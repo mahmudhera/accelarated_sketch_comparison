@@ -322,7 +322,11 @@ int main(int argc, char* argv[]) {
     CHECK_CUBLAS(cublasDestroy(handle));
 
     // the result h_C is in column-major order, convert it to a 2D float matrix
-    float results[num_rows][num_rows];
+    float ** results = new float*[num_rows];
+    for (int i = 0; i < num_rows; i++) {
+        results[i] = new float[num_rows];
+    }
+
     for (int i = 0; i < num_rows; i++) {
         for (int j = 0; j < num_rows; j++) {
             results[i][j] = h_C[j * num_rows + i];
@@ -343,6 +347,12 @@ int main(int argc, char* argv[]) {
 
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl; 
+
+    // free the memory
+    for (int i = 0; i < num_rows; i++) {
+        delete[] results[i];
+    }
+    delete[] results;
 
     return 0;
 
