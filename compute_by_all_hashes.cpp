@@ -209,6 +209,9 @@ int main(int argc, char* argv[]) {
     std::ofstream outputFile(argv[2]);
     for (int i = 0; i < jaccardMatrix.size(); i++) {
         for (int j = 0; j < jaccardMatrix[i].size(); j++) {
+            if (i == j) {
+                continue;
+            }
             if (jaccardMatrix[i][j] < 0.1) {
                 continue;
             }
