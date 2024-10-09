@@ -9,9 +9,13 @@
 
 #include "json.hpp"
 
+#include <zlib.h>
+
 
 
 using json = nlohmann::json;
+
+using namespace std;
 
 class HashValueMembersOf {
 public:
@@ -265,9 +269,41 @@ std::vector<std::vector<bool>> createBitRepresentation(const std::vector<std::ve
 
 
 
+string decompressGzip(const std::string& filename) {
+    // Open file
+    gzFile file = gzopen(filename.c_str(), "rb");
+    if (!file) {
+        throw runtime_error("Failed to open gzip file.");
+    }
+
+    // Buffer for decompressed data
+    const size_t bufferSize = 8192;
+    vector<char> buffer(bufferSize);
+    string decompressedData;
+
+    int bytesRead;
+    while ((bytesRead = gzread(file, buffer.data(), bufferSize)) > 0) {
+        decompressedData.append(buffer.data(), bytesRead);
+    }
+
+    gzclose(file);
+    return decompressedData;
+}
+
+
+
+
+
 
 
 std::vector<unsigned long long int> read_min_hashes(const std::string& json_filename) {
+    // if filename contains gz
+    if (json_filename.find(".gz") != std::string::npos) {
+        auto jsonData = json::parse(decompressGzip(json_filename));
+        std::vector<unsigned long long int> min_hashes = jsonData[0]["signatures"][0]["mins"];
+        return min_hashes;
+    }
+
     // Open the JSON file
     std::ifstream inputFile(json_filename);
 
