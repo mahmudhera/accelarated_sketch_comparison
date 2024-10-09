@@ -330,10 +330,15 @@ std::vector<unsigned long long int> read_min_hashes(const std::string& json_file
 
 std::vector<std::vector<unsigned long long int>> read_sketches(std::vector<std::string> sketch_names) {
     std::vector<std::vector<unsigned long long int>> sketches;
-    for (const auto& sketch_name : sketch_names) {
+    for (int i = 0; i < sketch_names.size(); i++) {
+        if (i % 1000 == 0) {
+            std::cout << "Reading sketch " << i << std::endl;
+        }
+        std::string sketch_name = sketch_names[i];
         std::vector<unsigned long long int> min_hashes = read_min_hashes(sketch_name);
         sketches.push_back(min_hashes);
     }
+    std::cout << "Finished reading " << sketch_names.size() << " sketches" << std::endl;
     return sketches;
 }
 
