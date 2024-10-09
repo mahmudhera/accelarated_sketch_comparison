@@ -322,14 +322,14 @@ int main(int argc, char* argv[]) {
     CHECK_CUBLAS(cublasDestroy(handle));
 
     // the result h_C is in column-major order, convert it to a 2D float matrix
-    float ** results = new float*[num_rows];
+    std::vector<std::vector<unsigned long long int>> intersectionMatrix;
     for (int i = 0; i < num_rows; i++) {
-        results[i] = new float[num_rows];
+        intersectionMatrix.push_back(std::vector<unsigned long long int>(num_rows, 0));
     }
 
     for (int i = 0; i < num_rows; i++) {
         for (int j = 0; j < num_rows; j++) {
-            results[i][j] = h_C[j * num_rows + i];
+            intersectionMatrix[i][j] = h_C[j * num_rows + i];
         }
     }
 
@@ -337,22 +337,38 @@ int main(int argc, char* argv[]) {
     delete[] h_A;
     delete[] h_C;
 
+    // compute the jaccard similarity
+    std::vector<std::vector<double>> jaccardMatrix = compute_jaccard(intersectionMatrix);
+
+    // write the jaccard matrix to a file
+    std::ofstream outputFile(argv[2]);
+    for (int i = 0; i < jaccardMatrix.size(); i++) {
+        for (int j = 0; j < jaccardMatrix.size(); j++) {
+            outputFile << jaccardMatrix[i][j] << " ";
+        }
+        outputFile << std::endl;
+    }
+    outputFile.close();
+
+    // show the first 10x10 elements of the jaccard matrix
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 10; j++) {
+            std::cout << jaccardMatrix[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+    
+
     // show the result, first 10x10
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 10; j++) {
-            std::cout << results[i][j] << " ";
+            std::cout << intersectionMatrix[i][j] << " ";
         }
         std::cout << std::endl;
     }
 
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl; 
-
-    // free the memory
-    for (int i = 0; i < num_rows; i++) {
-        delete[] results[i];
-    }
-    delete[] results;
 
     return 0;
 
