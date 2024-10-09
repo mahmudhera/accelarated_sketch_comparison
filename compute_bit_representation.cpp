@@ -7,23 +7,7 @@
 #include <unordered_set>
 #include <fstream>
 
-#include <Eigen/Dense>
-
 #include "json.hpp"
-
-
-
-#define CHECK_CUDA(call) \
-    if ((call) != cudaSuccess) { \
-        std::cerr << "CUDA error at " << __FILE__ << ":" << __LINE__ << std::endl; \
-        exit(EXIT_FAILURE); \
-    }
-
-#define CHECK_CUBLAS(call) \
-    if ((call) != CUBLAS_STATUS_SUCCESS) { \
-        std::cerr << "cuBLAS error at " << __FILE__ << ":" << __LINE__ << std::endl; \
-        exit(EXIT_FAILURE); \
-    }
 
 
 
@@ -428,22 +412,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    Eigen::MatrixXf result = A * A.transpose();
-
-    // show the first 10x10 elements of the result
-    std::cout << "First 10x10 elements of the result: " << std::endl;
-    smaller = std::min(10, (int)result.rows());
-    for (int i = 0; i < smaller; i++) {
-        for (int j = 0; j < smaller; j++) {
-            std::cout << result(i, j) << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    end = std::chrono::high_resolution_clock::now();
-
-    std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;    
-
+    
     return 0;
 
 }
