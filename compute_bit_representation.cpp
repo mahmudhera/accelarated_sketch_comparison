@@ -398,20 +398,6 @@ int main(int argc, char* argv[]) {
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
-
-    // compute the bit representation
-    start = std::chrono::high_resolution_clock::now();
-
-    std::vector<std::vector<bool>> bitRepresentation = createBitRepresentation(sketches);
-
-    // use Eigen/Dense to compute A * AT where A is the bit representation
-    Eigen::MatrixXf A(bitRepresentation.size(), bitRepresentation[0].size());
-    for (int i = 0; i < bitRepresentation.size(); i++) {
-        for (int j = 0; j < bitRepresentation[i].size(); j++) {
-            A(i, j) = bitRepresentation[i][j];
-        }
-    }
-
     
     return 0;
 
