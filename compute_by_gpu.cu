@@ -261,8 +261,8 @@ std::vector<std::vector<double>> compute_jaccard(std::vector<std::vector<unsigne
 int main(int argc, char* argv[]) {
     
     // command line arguments: filelist outputfile
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " filelist outputfile" << std::endl;
+    if (argc != 4) {
+        std::cerr << "Usage: " << argv[0] << " filelist outputfile gpu_id" << std::endl;
         return 1;
     }
 
@@ -288,6 +288,9 @@ int main(int argc, char* argv[]) {
             h_A[j * num_rows + i] = bitRepresentation[i][j];
         }
     }
+
+    // set the device using the gpu_id
+    CHECK_CUDA(cudaSetDevice(std::stoi(argv[3])));
 
     // allocate memory on the device
     float *d_A;
@@ -357,7 +360,7 @@ int main(int argc, char* argv[]) {
         }
         std::cout << std::endl;
     }
-    
+
 
     // show the result, first 10x10
     for (int i = 0; i < 10; i++) {
