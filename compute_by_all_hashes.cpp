@@ -205,13 +205,15 @@ int main(int argc, char* argv[]) {
         std::cout << std::endl;
     }
 
-    // write the jaccard matrix to the output file
+    // write the jaccard matrix to the output file, only write the pairs with jaccard similarity > 0.1
     std::ofstream outputFile(argv[2]);
     for (int i = 0; i < jaccardMatrix.size(); i++) {
         for (int j = 0; j < jaccardMatrix[i].size(); j++) {
-            outputFile << jaccardMatrix[i][j] << " ";
+            if (jaccardMatrix[i][j] < 0.1) {
+                continue;
+            }
+            outputFile << i << " " << j << " " << jaccardMatrix[i][j] << endl;
         }
-        outputFile << std::endl;
     }
 
     // close the output file
