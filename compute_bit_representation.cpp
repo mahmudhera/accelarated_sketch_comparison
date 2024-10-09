@@ -393,6 +393,10 @@ int main(int argc, char* argv[]) {
     // read the sketches
     std::vector<std::vector<unsigned long long int>> sketches = read_sketches(sketch_names);
 
+    auto end_read = std::chrono::high_resolution_clock::now();
+    std::cout << "Time taken to read the sketches: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_read - start).count() << " milliseconds" << std::endl;
+
+
     // create the intersection matrix
     std::vector<std::vector<unsigned long long int>> intersectionMatrix = computeIntersectionMatrix(sketches);
 
@@ -432,7 +436,9 @@ int main(int argc, char* argv[]) {
     }
 
     auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
+    // show time takes for processing only
+    std::cout << "Time taken for processing: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - end_read).count() << " milliseconds" << std::endl;
+    std::cout << "Time taken overall: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
     
     return 0;
