@@ -87,7 +87,16 @@ void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_
 
     for (int i = sketch_start_index; i < sketch_end_index; i++) {
         for (int j = 0; j < num_sketches; j++) {
+            if (i == j) {
+                continue;
+            }
+            if (intersectionMatrix[i][j] == 0) {
+                continue;
+            }
             float jaccard = 1.0 * intersectionMatrix[i][j] / ( sketches[i].size() + sketches[j].size() - intersectionMatrix[i][j] );
+            if (jaccard < 0.1) {
+                continue;
+            }
             outfile << i << " " << j << " " << jaccard << endl;
         }
     }
@@ -265,18 +274,11 @@ int main(int argc, char* argv[]) {
     std::cout << "Time taken for processing: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - end_read).count() << " milliseconds" << std::endl;
     std::cout << "Time taken overall: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start_program).count() << " milliseconds" << std::endl;
 
-
     // free memory of intersection matrix
     for (int i = 0; i < num_sketches; i++) {
         delete[] intersectionMatrix[i];
     }
     delete[] intersectionMatrix;
-
-    // free memory of jaccard matrix
-    for (int i = 0; i < num_sketches; i++) {
-        delete[] jaccardMatrix[i];
-    }
-    delete[] jaccardMatrix;
     
     return 0;
 
