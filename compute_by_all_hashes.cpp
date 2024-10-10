@@ -238,8 +238,8 @@ vector<unordered_map<int, float>> compute_jaccard(std::vector< unordered_map<int
 int main(int argc, char* argv[]) {
     
     // command line arguments: filelist outputfile
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " filelist outputfile" << std::endl;
+    if (argc != 4) {
+        std::cerr << "Usage: " << argv[0] << " filelist outputfile num_threads" << std::endl;
         return 1;
     }
 
@@ -263,7 +263,7 @@ int main(int argc, char* argv[]) {
     system("rm chunk_*");
 
     // separate the index into 64 parts, each will be processed by a thread
-    int num_threads = 64;
+    int num_threads = stoi(argv[3]);
     size_t chunk_size = all_hashes_to_sketch_indices.size() / num_threads;
     std::vector<std::thread> threads;
     auto it = all_hashes_to_sketch_indices.begin();
