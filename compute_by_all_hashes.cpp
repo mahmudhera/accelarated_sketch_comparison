@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <fstream>
+#include <thread>
 
 #include "json.hpp"
 
@@ -20,8 +21,14 @@ using namespace std;
 typedef unsigned long long int hash_t;
 
 
+std::vector<std::string> sketch_names;
+vector<vector<hash_t>> sketches;
+int num_sketches;
+int num_threads = 1;
 
-unordered_map<hash_t, vector<int>> compute_index_from_sketches(vector<vector<hash_t>> sketches) {
+
+
+unordered_map<hash_t, vector<int>> compute_index_from_sketches() {
     unordered_map<hash_t, vector<int>> index = unordered_map<hash_t, vector<int>>();
     for (int i = 0; i < sketches.size(); i++) {
         for (int j = 0; j < sketches[i].size(); j++) {
@@ -38,7 +45,7 @@ unordered_map<hash_t, vector<int>> compute_index_from_sketches(vector<vector<has
 
 
 
-vector<std::vector<int>> computeIntersectionMatrix(unordered_map<hash_t, vector<int>> index, int num_sketches) {
+vector<std::vector<int>> computeIntersectionMatrix(unordered_map<hash_t, vector<int>> index) {
 
     vector<vector<int>> intersectionMatrix(num_sketches, vector<int>(num_sketches, 0));
 
@@ -118,34 +125,41 @@ std::vector<hash_t> read_min_hashes(const std::string& json_filename) {
 }
 
 
-
-std::vector<std::vector<hash_t>> read_sketches(std::vector<std::string> sketch_names) {
-    std::vector<std::vector<hash_t>> sketches;
-    for (int i = 0; i < sketch_names.size(); i++) {
-        if (i % 1000 == 0) {
-            std::cout << "Reading sketch " << i << std::endl;
-        }
-        std::string sketch_name = sketch_names[i];
-        std::vector<hash_t> min_hashes = read_min_hashes(sketch_name);
-        sketches.push_back(min_hashes);
+void read_sketches_one_chunk(int start_index, int end_index) {
+    for (int i = start_index; i < end_index; i++) {
+        sketches[i] = read_min_hashes(sketch_names[i]);
     }
-    std::cout << "Finished reading " << sketch_names.size() << " sketches" << std::endl;
-    return sketches;
+}
+
+
+void read_sketches() {
+    for (int i = 0; i < num_sketches; i++) {
+        sketches.push_back( vector<hash_t>() );
+    }
+    int chunk_size = num_sketches / num_threads;
+    vector<thread> threads;
+    for (int i = 0; i < num_threads; i++) {
+        int start_index = i * chunk_size;
+        int end_index = (i == num_threads - 1) ? num_sketches : (i + 1) * chunk_size;
+        threads.push_back(thread(read_sketches_one_chunk, start_index, end_index));
+    }
+    for (int i = 0; i < num_threads; i++) {
+        threads[i].join();
+    }
 }
 
 
 
 
 
-std::vector<std::string> get_sketch_names(const std::string& filelist) {
+void get_sketch_names(const std::string& filelist) {
     // the filelist is a file, where each line is a path to a sketch file
     std::ifstream file(filelist);
-    std::vector<std::string> sketch_names;
     std::string line;
     while (std::getline(file, line)) {
         sketch_names.push_back(line);
     }
-    return sketch_names;
+    num_sketches = sketch_names.size();
 }
 
 
@@ -178,31 +192,32 @@ std::vector<std::vector<double>> compute_jaccard(std::vector<std::vector<int>> &
 int main(int argc, char* argv[]) {
     
     // command line arguments: filelist outputfile
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " filelist outputfile" << std::endl;
+    if (argc != 4) {
+        std::cerr << "Usage: " << argv[0] << " filelist outputfile num_threads" << std::endl;
         return 1;
     }
 
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start_program = std::chrono::high_resolution_clock::now();
+
+    num_threads = std::stoi(argv[3]);
 
     // get the sketch names
-    std::vector<std::string> sketch_names = get_sketch_names(argv[1]);
+    get_sketch_names(argv[1]);
 
     // read the sketches
-    std::vector<std::vector<hash_t>> sketches = read_sketches(sketch_names);
-
+    read_sketches();
     auto end_read = std::chrono::high_resolution_clock::now();
-    std::cout << "Time taken to read the sketches: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_read - start).count() << " milliseconds" << std::endl;
+    std::cout << "Time taken to read the sketches: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_read - start_program).count() << " milliseconds" << std::endl;
 
     // create the index
-    start = std::chrono::high_resolution_clock::now();
-    unordered_map<hash_t, vector<int>> index = compute_index_from_sketches(sketches);
+    auto start = std::chrono::high_resolution_clock::now();
+    unordered_map<hash_t, vector<int>> index = compute_index_from_sketches();
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to create the index: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
     // create the intersection matrix
     start = std::chrono::high_resolution_clock::now();
-    std::vector<std::vector<int>> intersectionMatrix = computeIntersectionMatrix(index, sketches.size());
+    std::vector<std::vector<int>> intersectionMatrix = computeIntersectionMatrix(index);
     end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to create the intersection matrix: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
@@ -234,7 +249,7 @@ int main(int argc, char* argv[]) {
 
     // show time takes for processing only
     std::cout << "Time taken for processing: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - end_read).count() << " milliseconds" << std::endl;
-    std::cout << "Time taken overall: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
+    std::cout << "Time taken overall: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start_program).count() << " milliseconds" << std::endl;
 
     
     return 0;
