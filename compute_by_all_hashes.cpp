@@ -49,7 +49,7 @@ void compute_index_from_sketches() {
 using MapType = unordered_map<hash_t, vector<int>>;
 
 
-void computeIntersectionMatrix(MapType::iterator& start, MapType::iterator& end) {
+void computeIntersectionMatrix(MapType::iterator start, MapType::iterator end) {
 
     for (auto it = start; it != end; it++) {
         vector<int> sketch_indices = it->second;
