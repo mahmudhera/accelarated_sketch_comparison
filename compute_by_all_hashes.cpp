@@ -26,8 +26,8 @@ vector<vector<hash_t>> sketches;
 int num_sketches;
 int num_threads = 1;
 unordered_map<hash_t, vector<int>> hash_index;
-vector<vector<int>> intersectionMatrix;
-std::vector<std::vector<double>> jaccardMatrix;
+int ** intersectionMatrix;
+double ** jaccardMatrix;
 
 
 
@@ -48,8 +48,6 @@ using MapType = unordered_map<hash_t, vector<int>>;
 
 
 void computeIntersectionMatrix(MapType::iterator& start, MapType::iterator& end) {
-
-    intersectionMatrix = vector<vector<int>>(num_sketches, vector<int>(num_sketches, 0));
 
     for (auto it = start; it != end; it++) {
         vector<int> sketch_indices = it->second;
@@ -155,12 +153,9 @@ void get_sketch_names(const std::string& filelist) {
 
 
 void compute_jaccard() {
-    for (int i = 0; i < intersectionMatrix.size(); i++) {
-        jaccardMatrix.push_back(std::vector<double>(intersectionMatrix.size(), 0.0));
-    }
-
-    for (int i = 0; i < intersectionMatrix.size(); i++) {
-        for (int j = 0; j < intersectionMatrix.size(); j++) {
+    
+    for (int i = 0; i < num_sketches; i++) {
+        for (int j = 0; j < num_sketches; j++) {
             if (i == j) {
                 jaccardMatrix[i][j] = 1.0;
                 continue;
@@ -205,6 +200,16 @@ int main(int argc, char* argv[]) {
 
     // create the intersection matrix
     start = std::chrono::high_resolution_clock::now();
+
+    // allocate memory for the intersection matrix
+    intersectionMatrix = new int*[num_sketches];
+    for (int i = 0; i < num_sketches; i++) {
+        intersectionMatrix[i] = new int[num_sketches];
+        for (int j = 0; j < num_sketches; j++) {
+            intersectionMatrix[i][j] = 0;
+        }
+    }
+
     auto it_start = hash_index.begin();
     auto it_end = hash_index.end();
     computeIntersectionMatrix(it_start, it_end);
@@ -213,6 +218,13 @@ int main(int argc, char* argv[]) {
 
     // create the jaccard matrix
     start = std::chrono::high_resolution_clock::now();
+
+    // allocate memory for the jaccard matrix
+    jaccardMatrix = new double*[num_sketches];
+    for (int i = 0; i < num_sketches; i++) {
+        jaccardMatrix[i] = new double[num_sketches];
+    }
+
     compute_jaccard();
     end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to create the jaccard matrix: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
@@ -220,8 +232,8 @@ int main(int argc, char* argv[]) {
     // write the jaccard matrix to the output file, only write the pairs with jaccard similarity > 0.1
     start = std::chrono::high_resolution_clock::now();
     std::ofstream outputFile(argv[2]);
-    for (int i = 0; i < jaccardMatrix.size(); i++) {
-        for (int j = 0; j < jaccardMatrix[i].size(); j++) {
+    for (int i = 0; i < num_sketches; i++) {
+        for (int j = 0; j < num_sketches; j++) {
             if (i == j) {
                 continue;
             }
@@ -241,6 +253,18 @@ int main(int argc, char* argv[]) {
     std::cout << "Time taken for processing: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - end_read).count() << " milliseconds" << std::endl;
     std::cout << "Time taken overall: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start_program).count() << " milliseconds" << std::endl;
 
+
+    // free memory of intersection matrix
+    for (int i = 0; i < num_sketches; i++) {
+        delete[] intersectionMatrix[i];
+    }
+    delete[] intersectionMatrix;
+
+    // free memory of jaccard matrix
+    for (int i = 0; i < num_sketches; i++) {
+        delete[] jaccardMatrix[i];
+    }
+    delete[] jaccardMatrix;
     
     return 0;
 
