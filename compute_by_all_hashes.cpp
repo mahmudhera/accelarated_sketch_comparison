@@ -211,11 +211,11 @@ int main(int argc, char* argv[]) {
     unordered_map< pair<int, int>, int > pair_to_intersection = computeIntersectionMatrix(sketches);
 
     // create the jaccard matrix
-    unordered_map< pair<int, int>, double > jaccardMatrix = compute_jaccard(pair_to_intersection);
+    unordered_map< pair<int, int>, double > pair_to_jaccard = compute_jaccard(pair_to_intersection);
 
     // write the jaccard matrix to the output file, only write the pairs with jaccard similarity > 0.1
     std::ofstream outputFile(argv[2]);
-    for (auto it = jaccardMatrix.begin(); it != jaccauto end = jaccardMatrix.end(); it++) {
+    for (auto it = pair_to_jaccard.begin(); it != pair_to_jaccard.end(); it++) {
         pair<int, int> pair = it->first;
         double jaccard = it->second;
         if (jaccard > 0.1) {
