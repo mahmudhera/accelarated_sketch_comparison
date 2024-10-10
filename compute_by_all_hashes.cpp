@@ -22,7 +22,7 @@ typedef unsigned long long int hash_t;
 
 
 unordered_map<hash_t, vector<int>> compute_index_from_sketches(vector<vector<hash_t>> sketches) {
-    unordered_map<hash_t, vector<int>> index;
+    unordered_map<hash_t, vector<int>> index = unordered_map<hash_t, vector<int>>();
     for (int i = 0; i < sketches.size(); i++) {
         for (int j = 0; j < sketches[i].size(); j++) {
             hash_t hash = sketches[i][j];
