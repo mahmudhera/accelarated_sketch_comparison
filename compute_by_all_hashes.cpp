@@ -274,7 +274,7 @@ int main(int argc, char* argv[]) {
         if (i == num_threads - 1) {
             it = all_hashes_to_sketch_indices.end();
         }
-        threads.emplace_back(compute_intersection_one_chunk, start_it, it);
+        threads.emplace_back(compute_intersection_one_chunk, start_it, it, sketches.size(), i);
     }
 
     for (auto& thread : threads) {
@@ -320,7 +320,7 @@ int main(int argc, char* argv[]) {
     // close the output file
     outputFile.close();
 
-    auto end = std::chrono::high_resolution_clock::now();
+    end = std::chrono::high_resolution_clock::now();
     // show time takes for processing only
     std::cout << "Time taken for processing: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - end_read).count() << " milliseconds" << std::endl;
     std::cout << "Time taken overall: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
