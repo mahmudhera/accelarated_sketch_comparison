@@ -231,7 +231,7 @@ int main(int argc, char* argv[]) {
     int chunk_size = num_sketches / num_threads;
     for (int i = 0; i < num_threads; i++) {
         int start_index = i * chunk_size;
-        int end_index = (i == num_threads - 1) ? hash_index.size() : (i + 1) * chunk_size;
+        int end_index = (i == num_threads - 1) ? num_sketches : (i + 1) * chunk_size;
         threads.push_back( thread(compute_intersection_matrix_by_sketches, start_index, end_index) );
     }
     for (int i = 0; i < num_threads; i++) {
