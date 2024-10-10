@@ -20,10 +20,7 @@ using namespace std;
 typedef unsigned long long int hash_t;
 
 
-
-
-vector< unordered_map<int, int> > computeIntersectionMatrix(vector<vector<hash_t>> sketches) {
-    
+unordered_map<hash_t, vector<int>> build_index_from_sketches(vector<vector<hash_t>> sketches) {
     auto start = std::chrono::high_resolution_clock::now();
 
     unordered_map<hash_t, vector<int>> all_hashes_to_sketch_idices;
@@ -42,9 +39,14 @@ vector< unordered_map<int, int> > computeIntersectionMatrix(vector<vector<hash_t
     std::chrono::duration<double> elapsed_seconds = end-start;
     std::cout << "Time taken to build the hash map: " << elapsed_seconds.count() << std::endl;
 
+    return all_hashes_to_sketch_idices;
+}
 
-    vector< unordered_map<int, int> > intersection_vector_info(sketches.size(), unordered_map<int, int>());
 
+
+vector< unordered_map<int, int> > computeIntersection(unordered_map<hash_t, vector<int>> all_hashes_to_sketch_idices, int num_sketches) {
+
+    vector< unordered_map<int, int> > intersection_vector_info(num_sketches, unordered_map<int, int>());
 
     for (auto it = all_hashes_to_sketch_idices.begin(); it != all_hashes_to_sketch_idices.end(); it++) {
         vector<int> sketch_indices = it->second;
@@ -68,10 +70,6 @@ vector< unordered_map<int, int> > computeIntersectionMatrix(vector<vector<hash_t
             }
         }
     }
-
-    auto end2 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_seconds2 = end2-end;
-    std::cout << "Time taken to build the intersection matrix: " << elapsed_seconds2.count() << std::endl;
 
     return intersection_vector_info;
 
@@ -170,23 +168,23 @@ std::vector<std::string> get_sketch_names(const std::string& filelist) {
 
 
 
-vector<unordered_map<int, float>> compute_jaccard(std::vector< unordered_map<int, int> > &intersectionMatrix) {
-    vector<unordered_map<int, float>> jaccardMatrix = vector<unordered_map<int, float>>();
-    for (int i = 0; i < intersectionMatrix.size(); i++) {
-        jaccardMatrix.push_back(unordered_map<int, float>());
+vector<unordered_map<int, float>> compute_jaccard(std::vector< unordered_map<int, int> > &intersection_info) {
+    vector<unordered_map<int, float>> jaccard_values = vector<unordered_map<int, float>>();
+    for (int i = 0; i < intersection_info.size(); i++) {
+        jaccard_values.push_back(unordered_map<int, float>());
     }
 
-    for (int i = 0; i < intersectionMatrix.size(); i++) {
-        for (auto it = intersectionMatrix[i].begin(); it != intersectionMatrix[i].end(); it++) {
+    for (int i = 0; i < intersection_info.size(); i++) {
+        for (auto it = intersection_info[i].begin(); it != intersection_info[i].end(); it++) {
             int j = it->first;
             int intersection = it->second;
-            int union_size = intersectionMatrix[i][i] + intersectionMatrix[j][j] - intersection;
+            int union_size = intersection_info[i][i] + intersection_info[j][j] - intersection;
             double jaccard = (double)intersection / (double)union_size;
-            jaccardMatrix[i][j] = jaccard;
+            jaccard_values[i][j] = jaccard;
         }
     }
 
-    return jaccardMatrix;
+    return jaccard_values;
 }
 
 
@@ -210,17 +208,19 @@ int main(int argc, char* argv[]) {
     auto end_read = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to read the sketches: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_read - start).count() << " milliseconds" << std::endl;
 
+    // build the index from the sketches
+    unordered_map<hash_t, vector<int>> all_hashes_to_sketch_idices = build_index_from_sketches(sketches);
 
     // create the intersection matrix
-    std::vector< unordered_map<int, int> > intersection_info = computeIntersectionMatrix(sketches);
+    std::vector< unordered_map<int, int> > intersection_info = computeIntersection(all_hashes_to_sketch_idices, sketches.size());
 
     // create the jaccard matrix
-    vector<unordered_map<int, float>> jaccardMatrix = compute_jaccard(intersection_info);
+    vector<unordered_map<int, float>> jaccard_values = compute_jaccard(intersection_info);
 
     // write the jaccard matrix to the output file, only write the pairs with jaccard similarity > 0.1
     std::ofstream outputFile(argv[2]);
-    for (int i = 0; i < jaccardMatrix.size(); i++) {
-        for (auto it = jaccardMatrix[i].begin(); it != jaccardMatrix[i].end(); it++) {
+    for (int i = 0; i < jaccard_values.size(); i++) {
+        for (auto it = jaccard_values[i].begin(); it != jaccard_values[i].end(); it++) {
             if (it->second > 0.1) {
                 outputFile << i << " " << it->first << " " << it->second << std::endl;
             }
