@@ -22,7 +22,7 @@ typedef unsigned long long int hash_t;
 
 
 
-vector< unordered_map<int, int> > computeIntersectionMatrix(vector<vector<hash_t>> sketches) {
+vector<std::vector<int>> computeIntersectionMatrix(vector<vector<hash_t>> sketches) {
     
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -42,29 +42,15 @@ vector< unordered_map<int, int> > computeIntersectionMatrix(vector<vector<hash_t
     std::chrono::duration<double> elapsed_seconds = end-start;
     std::cout << "Time taken to build the hash map: " << elapsed_seconds.count() << std::endl;
 
-
-    vector< unordered_map<int, int> > intersection_vector_info(sketches.size(), unordered_map<int, int>());
-
+    vector<vector<int>> intersectionMatrix(sketches.size(), vector<int>(sketches.size(), 0));
 
     for (auto it = all_hashes_to_sketch_idices.begin(); it != all_hashes_to_sketch_idices.end(); it++) {
         vector<int> sketch_indices = it->second;
         for (int i = 0; i < sketch_indices.size(); i++) {
-            if (intersection_vector_info[sketch_indices[i]].find(sketch_indices[i]) == intersection_vector_info[sketch_indices[i]].end()) {
-                intersection_vector_info[sketch_indices[i]][sketch_indices[i]] = 1;
-            } else {
-                intersection_vector_info[sketch_indices[i]][sketch_indices[i]]++;
-            }
+            intersectionMatrix[sketch_indices[i]][sketch_indices[i]]++;
             for (int j = i + 1; j < sketch_indices.size(); j++) {
-                if (intersection_vector_info[sketch_indices[i]].find(sketch_indices[j]) == intersection_vector_info[sketch_indices[i]].end()) {
-                    intersection_vector_info[sketch_indices[i]][sketch_indices[j]] = 1;
-                } else {
-                    intersection_vector_info[sketch_indices[i]][sketch_indices[j]]++;
-                }
-                if (intersection_vector_info[sketch_indices[j]].find(sketch_indices[i]) == intersection_vector_info[sketch_indices[j]].end()) {
-                    intersection_vector_info[sketch_indices[j]][sketch_indices[i]] = 1;
-                } else {
-                    intersection_vector_info[sketch_indices[j]][sketch_indices[i]]++;
-                }
+                intersectionMatrix[sketch_indices[i]][sketch_indices[j]]++;
+                intersectionMatrix[sketch_indices[j]][sketch_indices[i]]++;
             }
         }
     }
@@ -73,7 +59,7 @@ vector< unordered_map<int, int> > computeIntersectionMatrix(vector<vector<hash_t
     std::chrono::duration<double> elapsed_seconds2 = end2-end;
     std::cout << "Time taken to build the intersection matrix: " << elapsed_seconds2.count() << std::endl;
 
-    return intersection_vector_info;
+    return intersectionMatrix;
 
 }
 
@@ -170,19 +156,23 @@ std::vector<std::string> get_sketch_names(const std::string& filelist) {
 
 
 
-std::vector<std::vector<double>> compute_jaccard(std::vector< unordered_map<int, int> > &intersectionMatrix) {
+std::vector<std::vector<double>> compute_jaccard(std::vector<std::vector<int>> &intersectionMatrix) {
     std::vector<std::vector<double>> jaccardMatrix;
     for (int i = 0; i < intersectionMatrix.size(); i++) {
         jaccardMatrix.push_back(std::vector<double>(intersectionMatrix.size(), 0.0));
     }
 
     for (int i = 0; i < intersectionMatrix.size(); i++) {
-        for (auto it = intersectionMatrix[i].begin(); it != intersectionMatrix[i].end(); it++) {
-            int j = it->first;
-            int intersection = it->second;
-            int union_size = intersectionMatrix[i][i] + intersectionMatrix[j][j] - intersection;
-            double jaccard = (double)intersection / (double)union_size;
-            jaccardMatrix[i][j] = jaccard;
+        for (int j = 0; j < intersectionMatrix.size(); j++) {
+            if (i == j) {
+                jaccardMatrix[i][j] = 1.0;
+                continue;
+            }
+            if ((intersectionMatrix[i][i] + intersectionMatrix[j][j] - intersectionMatrix[i][j]) == 0) {
+                jaccardMatrix[i][j] = 0.0;
+                continue;
+            } 
+            jaccardMatrix[i][j] = 1.0 * intersectionMatrix[i][j] / (intersectionMatrix[i][i] + intersectionMatrix[j][j] - intersectionMatrix[i][j]);
         }
     }
 
@@ -212,10 +202,10 @@ int main(int argc, char* argv[]) {
 
 
     // create the intersection matrix
-    std::vector< unordered_map<int, int> > intersection_info = computeIntersectionMatrix(sketches);
+    std::vector<std::vector<int>> intersectionMatrix = computeIntersectionMatrix(sketches);
 
     // create the jaccard matrix
-    std::vector<std::vector<double>> jaccardMatrix = compute_jaccard(intersection_info);
+    std::vector<std::vector<double>> jaccardMatrix = compute_jaccard(intersectionMatrix);
 
     // show first 10x10 elements of the jaccard matrix
     std::cout << "First 10x10 elements of the jaccard matrix: " << std::endl;
@@ -244,6 +234,16 @@ int main(int argc, char* argv[]) {
     // close the output file
     outputFile.close();
 
+    // show the first 10x10 elements in the intersection matrix
+    std::cout << "First 10x10 elements of the intersection matrix: " << std::endl;
+    smaller = std::min(10, (int)intersectionMatrix.size());
+    for (int i = 0; i < smaller; i++) {
+        for (int j = 0; j < smaller; j++) {
+            std::cout << intersectionMatrix[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+
     auto end = std::chrono::high_resolution_clock::now();
     // show time takes for processing only
     std::cout << "Time taken for processing: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - end_read).count() << " milliseconds" << std::endl;
@@ -253,7 +253,3 @@ int main(int argc, char* argv[]) {
     return 0;
 
 }
-
-
-
-// fcde5c8edc3f5e3dd77184bc5b8841230c8ce534: very fast, but memory usage is high
