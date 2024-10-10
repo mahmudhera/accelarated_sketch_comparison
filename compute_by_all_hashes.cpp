@@ -44,12 +44,14 @@ void compute_index_from_sketches() {
 }
 
 
+using MapType = unordered_map<hash_t, vector<int>>;
 
-void computeIntersectionMatrix() {
+
+void computeIntersectionMatrix(MapType::iterator& start, MapType::iterator& end) {
 
     intersectionMatrix = vector<vector<int>>(num_sketches, vector<int>(num_sketches, 0));
 
-    for (auto it = hash_index.begin(); it != hash_index.end(); it++) {
+    for (auto it = start; it != end; it++) {
         vector<int> sketch_indices = it->second;
         for (int i = 0; i < sketch_indices.size(); i++) {
             intersectionMatrix[sketch_indices[i]][sketch_indices[i]]++;
@@ -61,8 +63,6 @@ void computeIntersectionMatrix() {
     }
 
 }
-
-
 
 
 string decompressGzip(const std::string& filename) {
@@ -85,11 +85,6 @@ string decompressGzip(const std::string& filename) {
     gzclose(file);
     return decompressedData;
 }
-
-
-
-
-
 
 
 std::vector<hash_t> read_min_hashes(const std::string& json_filename) {
@@ -210,7 +205,9 @@ int main(int argc, char* argv[]) {
 
     // create the intersection matrix
     start = std::chrono::high_resolution_clock::now();
-    computeIntersectionMatrix();
+    auto it_start = hash_index.begin();
+    auto it_end = hash_index.end();
+    computeIntersectionMatrix(it_start, it_end);
     end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to create the intersection matrix: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
