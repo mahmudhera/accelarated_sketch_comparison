@@ -244,16 +244,6 @@ int main(int argc, char* argv[]) {
     // close the output file
     outputFile.close();
 
-    // show the first 10x10 elements in the intersection matrix
-    std::cout << "First 10x10 elements of the intersection matrix: " << std::endl;
-    smaller = std::min(10, (int)intersectionMatrix.size());
-    for (int i = 0; i < smaller; i++) {
-        for (int j = 0; j < smaller; j++) {
-            std::cout << intersectionMatrix[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
-
     auto end = std::chrono::high_resolution_clock::now();
     // show time takes for processing only
     std::cout << "Time taken for processing: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - end_read).count() << " milliseconds" << std::endl;
