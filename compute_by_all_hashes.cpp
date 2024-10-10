@@ -228,7 +228,7 @@ int main(int argc, char* argv[]) {
 
     // compute the intersection matrix using the function compute_intersection_matrix_by_sketches
     vector<thread> threads;
-    int chunk_size = hash_index.size() / num_threads;
+    int chunk_size = num_sketches / num_threads;
     for (int i = 0; i < num_threads; i++) {
         int start_index = i * chunk_size;
         int end_index = (i == num_threads - 1) ? hash_index.size() : (i + 1) * chunk_size;
