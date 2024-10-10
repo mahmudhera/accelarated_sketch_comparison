@@ -7,7 +7,6 @@
 #include <unordered_set>
 #include <fstream>
 #include <thread>
-#include <mutex>
 
 #include "json.hpp"
 
@@ -29,7 +28,6 @@ int num_threads = 1;
 unordered_map<hash_t, vector<int>> hash_index;
 int ** intersectionMatrix;
 double ** jaccardMatrix;
-mutex ** mutexes;
 
 
 
@@ -49,23 +47,35 @@ void compute_index_from_sketches() {
 using MapType = unordered_map<hash_t, vector<int>>;
 
 
+// not thread safe
 void computeIntersectionMatrix(MapType::iterator start, MapType::iterator end) {
 
     for (auto it = start; it != end; it++) {
         vector<int> sketch_indices = it->second;
         for (int i = 0; i < sketch_indices.size(); i++) {
-            mutexes[i][i].lock();
             intersectionMatrix[sketch_indices[i]][sketch_indices[i]]++;
-            mutexes[i][i].unlock();
             for (int j = i + 1; j < sketch_indices.size(); j++) {
-                mutexes[i][j].lock();
                 intersectionMatrix[sketch_indices[i]][sketch_indices[j]]++;
                 intersectionMatrix[sketch_indices[j]][sketch_indices[i]]++;
-                mutexes[i][j].unlock();
             }
         }
     }
 
+}
+
+
+void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_end_index) {
+    for (int i = sketch_start_index; i < sketch_end_index; i++) {
+        for (int j = 0; j < sketches[i].size(); j++) {
+            hash_t hash = sketches[i][j];
+            if (hash_index.find(hash) != hash_index.end()) {
+                vector<int> sketch_indices = hash_index[hash];
+                for (int k = 0; k < sketch_indices.size(); k++) {
+                    intersectionMatrix[i][sketch_indices[k]]++;
+                }
+            }
+        }
+    }
 }
 
 
@@ -216,22 +226,13 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // allocate num_sketches * num_sketches mutexes for the intersection matrix
-    mutexes = new mutex*[num_sketches];
-    for (int i = 0; i < num_sketches; i++) {
-        mutexes[i] = new mutex[num_sketches];
-        for (int j = 0; j < num_sketches; j++) {
-            new (&mutexes[i][j]) std::mutex;  // Placement new to construct a mutex in place
-        }
-    }
-
-    auto it_start = hash_index.begin();
-    auto chunk_size = hash_index.size() / num_threads;
+    // compute the intersection matrix using the function compute_intersection_matrix_by_sketches
     vector<thread> threads;
+    int chunk_size = hash_index.size() / num_threads;
     for (int i = 0; i < num_threads; i++) {
-        auto it_end = next(it_start, chunk_size);
-        threads.push_back(thread(computeIntersectionMatrix, it_start, it_end));
-        it_start = it_end;
+        int start_index = i * chunk_size;
+        int end_index = (i == num_threads - 1) ? hash_index.size() : (i + 1) * chunk_size;
+        threads.push_back( thread(compute_intersection_matrix_by_sketches, start_index, end_index) );
     }
     for (int i = 0; i < num_threads; i++) {
         threads[i].join();
