@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <fstream>
 #include <thread>
+#include <mutex>
 
 #include "json.hpp"
 
@@ -28,6 +29,7 @@ int num_threads = 1;
 unordered_map<hash_t, vector<int>> hash_index;
 int ** intersectionMatrix;
 double ** jaccardMatrix;
+mutex ** mutexes;
 
 
 
@@ -52,10 +54,14 @@ void computeIntersectionMatrix(MapType::iterator& start, MapType::iterator& end)
     for (auto it = start; it != end; it++) {
         vector<int> sketch_indices = it->second;
         for (int i = 0; i < sketch_indices.size(); i++) {
+            mutexes[i][i].lock();
             intersectionMatrix[sketch_indices[i]][sketch_indices[i]]++;
+            mutexes[i][i].unlock();
             for (int j = i + 1; j < sketch_indices.size(); j++) {
+                mutexes[i][j].lock();
                 intersectionMatrix[sketch_indices[i]][sketch_indices[j]]++;
                 intersectionMatrix[sketch_indices[j]][sketch_indices[i]]++;
+                mutexes[i][j].unlock();
             }
         }
     }
@@ -210,9 +216,27 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    // allocate num_sketches * num_sketches mutexes for the intersection matrix
+    mutexes = new mutex*[num_sketches];
+    for (int i = 0; i < num_sketches; i++) {
+        mutexes[i] = new mutex[num_sketches];
+        for (int j = 0; j < num_sketches; j++) {
+            new (&mutexes[i][j]) std::mutex;  // Placement new to construct a mutex in place
+        }
+    }
+
     auto it_start = hash_index.begin();
-    auto it_end = hash_index.end();
-    computeIntersectionMatrix(it_start, it_end);
+    auto chunk_size = hash_index.size() / num_threads;
+    vector<thread> threads;
+    for (int i = 0; i < num_threads; i++) {
+        auto it_end = next(it_start, chunk_size);
+        threads.push_back(thread(computeIntersectionMatrix, it_start, it_end));
+        it_start = it_end;
+    }
+    for (int i = 0; i < num_threads; i++) {
+        threads[i].join();
+    }
+
     end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to create the intersection matrix: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
