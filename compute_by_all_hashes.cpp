@@ -24,6 +24,8 @@ typedef unsigned long long int hash_t;
 
 vector<std::vector<int>> computeIntersectionMatrix(vector<vector<hash_t>> sketches) {
     
+    auto start = std::chrono::high_resolution_clock::now();
+
     unordered_map<hash_t, vector<int>> all_hashes_to_sketch_idices;
 
     for (int i = 0; i < sketches.size(); i++) {
@@ -35,6 +37,10 @@ vector<std::vector<int>> computeIntersectionMatrix(vector<vector<hash_t>> sketch
             all_hashes_to_sketch_idices[hash].push_back(i);
         }
     }
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    std::cout << "Time taken to build the hash map: " << elapsed_seconds.count() << std::endl;
 
     vector<vector<int>> intersectionMatrix(sketches.size(), vector<int>(sketches.size(), 0));
 
@@ -48,6 +54,10 @@ vector<std::vector<int>> computeIntersectionMatrix(vector<vector<hash_t>> sketch
             }
         }
     }
+
+    auto end2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_seconds2 = end2-end;
+    std::cout << "Time taken to build the intersection matrix: " << elapsed_seconds2.count() << std::endl;
 
     return intersectionMatrix;
 
@@ -128,6 +138,8 @@ std::vector<std::vector<hash_t>> read_sketches(std::vector<std::string> sketch_n
     std::cout << "Finished reading " << sketch_names.size() << " sketches" << std::endl;
     return sketches;
 }
+
+
 
 
 
