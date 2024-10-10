@@ -64,7 +64,7 @@ void computeIntersectionMatrix(MapType::iterator start, MapType::iterator end) {
 }
 
 
-void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_end_index) {
+void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_end_index, int thread_id, string out_dir) {
     for (int i = sketch_start_index; i < sketch_end_index; i++) {
         for (int j = 0; j < sketches[i].size(); j++) {
             hash_t hash = sketches[i][j];
@@ -76,6 +76,23 @@ void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_
             }
         }
     }
+
+    // write the similarity values to file. filename: out_dir/id.txt, where id is thread id in 3 digits
+    string id_in_three_digits_str = to_string(thread_id);
+    while (id_in_three_digits_str.size() < 3) {
+        id_in_three_digits_str = "0" + id_in_three_digits_str;
+    }
+    string filename = out_dir + "/" + id_in_three_digits_str + ".txt";
+    ofstream outfile(filename);
+
+    for (int i = sketch_start_index; i < sketch_end_index; i++) {
+        for (int j = 0; j < num_sketches; j++) {
+            float jaccard = 1.0 * intersectionMatrix[i][j] / ( sketches[i].size() + sketches[j].size() - intersectionMatrix[i][j] );
+            outfile << i << " " << j << " " << jaccard << endl;
+        }
+    }
+
+    outfile.close();
 }
 
 
@@ -192,7 +209,7 @@ int main(int argc, char* argv[]) {
     
     // command line arguments: filelist outputfile
     if (argc != 4) {
-        std::cerr << "Usage: " << argv[0] << " filelist outputfile num_threads" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <file_list> <out_dir> <num_threads>" << std::endl;
         return 1;
     }
 
@@ -227,12 +244,15 @@ int main(int argc, char* argv[]) {
     }
 
     // compute the intersection matrix using the function compute_intersection_matrix_by_sketches
+    // the function also writes the results to output directory
+    // each thread is assigned an id. the output file is named as <id>.txt
+    std::string out_dir = argv[2];
     vector<thread> threads;
     int chunk_size = num_sketches / num_threads;
     for (int i = 0; i < num_threads; i++) {
         int start_index = i * chunk_size;
         int end_index = (i == num_threads - 1) ? num_sketches : (i + 1) * chunk_size;
-        threads.push_back( thread(compute_intersection_matrix_by_sketches, start_index, end_index) );
+        threads.push_back( thread(compute_intersection_matrix_by_sketches, start_index, end_index, i, out_dir) );
     }
     for (int i = 0; i < num_threads; i++) {
         threads[i].join();
@@ -240,39 +260,6 @@ int main(int argc, char* argv[]) {
 
     end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to create the intersection matrix: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
-
-    // create the jaccard matrix
-    start = std::chrono::high_resolution_clock::now();
-
-    // allocate memory for the jaccard matrix
-    jaccardMatrix = new double*[num_sketches];
-    for (int i = 0; i < num_sketches; i++) {
-        jaccardMatrix[i] = new double[num_sketches];
-    }
-
-    compute_jaccard();
-    end = std::chrono::high_resolution_clock::now();
-    std::cout << "Time taken to create the jaccard matrix: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
-
-    // write the jaccard matrix to the output file, only write the pairs with jaccard similarity > 0.1
-    start = std::chrono::high_resolution_clock::now();
-    std::ofstream outputFile(argv[2]);
-    for (int i = 0; i < num_sketches; i++) {
-        for (int j = 0; j < num_sketches; j++) {
-            if (i == j) {
-                continue;
-            }
-            if (jaccardMatrix[i][j] < 0.1) {
-                continue;
-            }
-            outputFile << i << " " << j << " " << jaccardMatrix[i][j] << endl;
-        }
-    }
-
-    // close the output file
-    outputFile.close();
-    end = std::chrono::high_resolution_clock::now();
-    std::cout << "Time taken to write the jaccard matrix: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
     // show time takes for processing only
     std::cout << "Time taken for processing: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - end_read).count() << " milliseconds" << std::endl;
