@@ -21,30 +21,28 @@ typedef unsigned long long int hash_t;
 
 
 
-
-vector<std::vector<int>> computeIntersectionMatrix(vector<vector<hash_t>> sketches) {
-    
-    auto start = std::chrono::high_resolution_clock::now();
-
-    unordered_map<hash_t, vector<int>> all_hashes_to_sketch_idices;
-
+unordered_map<hash_t, vector<int>> compute_index_from_sketches(vector<vector<hash_t>> sketches) {
+    unordered_map<hash_t, vector<int>> index;
     for (int i = 0; i < sketches.size(); i++) {
         for (int j = 0; j < sketches[i].size(); j++) {
             hash_t hash = sketches[i][j];
-            if (all_hashes_to_sketch_idices.find(hash) == all_hashes_to_sketch_idices.end()) {
-                all_hashes_to_sketch_idices[hash] = vector<int>();
+            if (index.find(hash) == index.end()) {
+                index[hash] = vector<int>();
             }
-            all_hashes_to_sketch_idices[hash].push_back(i);
+            index[hash].push_back(i);
         }
     }
+    return index;
+}
 
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end-start;
-    std::cout << "Time taken to build the hash map: " << elapsed_seconds.count() << std::endl;
 
-    vector<vector<int>> intersectionMatrix(sketches.size(), vector<int>(sketches.size(), 0));
 
-    for (auto it = all_hashes_to_sketch_idices.begin(); it != all_hashes_to_sketch_idices.end(); it++) {
+
+vector<std::vector<int>> computeIntersectionMatrix(unordered_map<hash_t, vector<int>> index, int num_sketches) {
+
+    vector<vector<int>> intersectionMatrix(num_sketches, vector<int>(num_sketches, 0));
+
+    for (auto it = index.begin(); it != index.end(); it++) {
         vector<int> sketch_indices = it->second;
         for (int i = 0; i < sketch_indices.size(); i++) {
             intersectionMatrix[sketch_indices[i]][sketch_indices[i]]++;
@@ -54,10 +52,6 @@ vector<std::vector<int>> computeIntersectionMatrix(vector<vector<hash_t>> sketch
             }
         }
     }
-
-    auto end2 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_seconds2 = end2-end;
-    std::cout << "Time taken to build the intersection matrix: " << elapsed_seconds2.count() << std::endl;
 
     return intersectionMatrix;
 
@@ -200,24 +194,26 @@ int main(int argc, char* argv[]) {
     auto end_read = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to read the sketches: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_read - start).count() << " milliseconds" << std::endl;
 
+    // create the index
+    start = std::chrono::high_resolution_clock::now();
+    unordered_map<hash_t, vector<int>> index = compute_index_from_sketches(sketches);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "Time taken to create the index: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
     // create the intersection matrix
-    std::vector<std::vector<int>> intersectionMatrix = computeIntersectionMatrix(sketches);
+    start = std::chrono::high_resolution_clock::now();
+    std::vector<std::vector<int>> intersectionMatrix = computeIntersectionMatrix(index, sketches.size());
+    end = std::chrono::high_resolution_clock::now();
+    std::cout << "Time taken to create the intersection matrix: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
     // create the jaccard matrix
+    start = std::chrono::high_resolution_clock::now();
     std::vector<std::vector<double>> jaccardMatrix = compute_jaccard(intersectionMatrix);
-
-    // show first 10x10 elements of the jaccard matrix
-    std::cout << "First 10x10 elements of the jaccard matrix: " << std::endl;
-    int smaller = std::min(10, (int)jaccardMatrix.size());
-    for (int i = 0; i < smaller; i++) {
-        for (int j = 0; j < smaller; j++) {
-            std::cout << jaccardMatrix[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
+    end = std::chrono::high_resolution_clock::now();
+    std::cout << "Time taken to create the jaccard matrix: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
     // write the jaccard matrix to the output file, only write the pairs with jaccard similarity > 0.1
+    start = std::chrono::high_resolution_clock::now();
     std::ofstream outputFile(argv[2]);
     for (int i = 0; i < jaccardMatrix.size(); i++) {
         for (int j = 0; j < jaccardMatrix[i].size(); j++) {
@@ -233,18 +229,9 @@ int main(int argc, char* argv[]) {
 
     // close the output file
     outputFile.close();
+    end = std::chrono::high_resolution_clock::now();
+    std::cout << "Time taken to write the jaccard matrix: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
-    // show the first 10x10 elements in the intersection matrix
-    std::cout << "First 10x10 elements of the intersection matrix: " << std::endl;
-    smaller = std::min(10, (int)intersectionMatrix.size());
-    for (int i = 0; i < smaller; i++) {
-        for (int j = 0; j < smaller; j++) {
-            std::cout << intersectionMatrix[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    auto end = std::chrono::high_resolution_clock::now();
     // show time takes for processing only
     std::cout << "Time taken for processing: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - end_read).count() << " milliseconds" << std::endl;
     std::cout << "Time taken overall: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
