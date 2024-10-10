@@ -25,7 +25,7 @@ std::vector<std::string> sketch_names;
 vector<vector<hash_t>> sketches;
 int num_sketches;
 int num_threads = 1;
-unordered_map<hash_t, vector<int>> index;
+unordered_map<hash_t, vector<int>> hash_index;
 vector<vector<int>> intersectionMatrix;
 std::vector<std::vector<double>> jaccardMatrix;
 
@@ -35,10 +35,10 @@ void compute_index_from_sketches() {
     for (int i = 0; i < sketches.size(); i++) {
         for (int j = 0; j < sketches[i].size(); j++) {
             hash_t hash = sketches[i][j];
-            if (index.find(hash) == index.end()) {
-                index[hash] = vector<int>();
+            if (hash_index.find(hash) == hash_index.end()) {
+                hash_index[hash] = vector<int>();
             }
-            index[hash].push_back(i);
+            hash_index[hash].push_back(i);
         }
     }
 }
@@ -49,7 +49,7 @@ void computeIntersectionMatrix() {
 
     intersectionMatrix = vector<vector<int>>(num_sketches, vector<int>(num_sketches, 0));
 
-    for (auto it = index.begin(); it != index.end(); it++) {
+    for (auto it = hash_index.begin(); it != hash_index.end(); it++) {
         vector<int> sketch_indices = it->second;
         for (int i = 0; i < sketch_indices.size(); i++) {
             intersectionMatrix[sketch_indices[i]][sketch_indices[i]]++;
