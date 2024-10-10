@@ -21,18 +21,8 @@ typedef unsigned long long int hash_t;
 
 
 
-struct pair_hash {
-    template <class T1, class T2>
-    std::size_t operator () (const std::pair<T1, T2>& p) const {
-        auto hash1 = std::hash<T1>{}(p.first);
-        auto hash2 = std::hash<T2>{}(p.second);
-        return hash1 ^ (hash2 << 1); // combine hashes
-    }
-};
 
-
-
-unordered_map< pair<int, int>, int, pair_hash > computeIntersectionMatrix(vector<vector<hash_t>> sketches) {
+vector<std::vector<int>> computeIntersectionMatrix(vector<vector<hash_t>> sketches) {
     
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -52,27 +42,15 @@ unordered_map< pair<int, int>, int, pair_hash > computeIntersectionMatrix(vector
     std::chrono::duration<double> elapsed_seconds = end-start;
     std::cout << "Time taken to build the hash map: " << elapsed_seconds.count() << std::endl;
 
-    unordered_map< pair<int, int>, int, pair_hash > pair_to_intersection_count;
+    vector<vector<int>> intersectionMatrix(sketches.size(), vector<int>(sketches.size(), 0));
 
     for (auto it = all_hashes_to_sketch_idices.begin(); it != all_hashes_to_sketch_idices.end(); it++) {
         vector<int> sketch_indices = it->second;
         for (int i = 0; i < sketch_indices.size(); i++) {
-            auto pair = make_pair(sketch_indices[i], sketch_indices[i]);
-            if (pair_to_intersection_count.find(pair) == pair_to_intersection_count.end()) {
-                pair_to_intersection_count[pair] = 0;
-            }
-            pair_to_intersection_count[pair]++;
+            intersectionMatrix[sketch_indices[i]][sketch_indices[i]]++;
             for (int j = i + 1; j < sketch_indices.size(); j++) {
-                auto pair = make_pair(sketch_indices[i], sketch_indices[j]);
-                if (pair_to_intersection_count.find(pair) == pair_to_intersection_count.end()) {
-                    pair_to_intersection_count[pair] = 0;
-                }
-                pair_to_intersection_count[pair]++;
-                pair = make_pair(sketch_indices[j], sketch_indices[i]);
-                if (pair_to_intersection_count.find(pair) == pair_to_intersection_count.end()) {
-                    pair_to_intersection_count[pair] = 0;
-                }
-                pair_to_intersection_count[pair]++;
+                intersectionMatrix[sketch_indices[i]][sketch_indices[j]]++;
+                intersectionMatrix[sketch_indices[j]][sketch_indices[i]]++;
             }
         }
     }
@@ -81,7 +59,7 @@ unordered_map< pair<int, int>, int, pair_hash > computeIntersectionMatrix(vector
     std::chrono::duration<double> elapsed_seconds2 = end2-end;
     std::cout << "Time taken to build the intersection matrix: " << elapsed_seconds2.count() << std::endl;
 
-    return pair_to_intersection_count;
+    return intersectionMatrix;
 
 }
 
@@ -165,7 +143,6 @@ std::vector<std::vector<hash_t>> read_sketches(std::vector<std::string> sketch_n
 
 
 
-
 std::vector<std::string> get_sketch_names(const std::string& filelist) {
     // the filelist is a file, where each line is a path to a sketch file
     std::ifstream file(filelist);
@@ -179,20 +156,27 @@ std::vector<std::string> get_sketch_names(const std::string& filelist) {
 
 
 
-unordered_map< pair<int, int>, double, pair_hash > compute_jaccard(unordered_map< pair<int, int>, int, pair_hash > pair_to_intersection) {
-    unordered_map< pair<int, int>, double, pair_hash > pair_to_jaccard;
-    for (auto it = pair_to_intersection.begin(); it != pair_to_intersection.end(); it++) {
-        pair<int, int> pair = it->first;
-        int intersection = it->second;
-
-        auto size1 = pair_to_intersection[ make_pair(pair.first, pair.first) ];
-        auto size2 = pair_to_intersection[ make_pair(pair.second, pair.second) ];
-
-        int union_size = size1 + size2 - intersection;
-        double jaccard = (double)intersection / union_size;
-        pair_to_jaccard[pair] = jaccard;
+std::vector<std::vector<double>> compute_jaccard(std::vector<std::vector<int>> &intersectionMatrix) {
+    std::vector<std::vector<double>> jaccardMatrix;
+    for (int i = 0; i < intersectionMatrix.size(); i++) {
+        jaccardMatrix.push_back(std::vector<double>(intersectionMatrix.size(), 0.0));
     }
-    return pair_to_jaccard;
+
+    for (int i = 0; i < intersectionMatrix.size(); i++) {
+        for (int j = 0; j < intersectionMatrix.size(); j++) {
+            if (i == j) {
+                jaccardMatrix[i][j] = 1.0;
+                continue;
+            }
+            if ((intersectionMatrix[i][i] + intersectionMatrix[j][j] - intersectionMatrix[i][j]) == 0) {
+                jaccardMatrix[i][j] = 0.0;
+                continue;
+            } 
+            jaccardMatrix[i][j] = 1.0 * intersectionMatrix[i][j] / (intersectionMatrix[i][i] + intersectionMatrix[j][j] - intersectionMatrix[i][j]);
+        }
+    }
+
+    return jaccardMatrix;
 }
 
 
@@ -218,18 +202,32 @@ int main(int argc, char* argv[]) {
 
 
     // create the intersection matrix
-    unordered_map< pair<int, int>, int, pair_hash > pair_to_intersection = computeIntersectionMatrix(sketches);
+    std::vector<std::vector<int>> intersectionMatrix = computeIntersectionMatrix(sketches);
 
     // create the jaccard matrix
-    unordered_map< pair<int, int>, double, pair_hash > pair_to_jaccard = compute_jaccard(pair_to_intersection);
+    std::vector<std::vector<double>> jaccardMatrix = compute_jaccard(intersectionMatrix);
+
+    // show first 10x10 elements of the jaccard matrix
+    std::cout << "First 10x10 elements of the jaccard matrix: " << std::endl;
+    int smaller = std::min(10, (int)jaccardMatrix.size());
+    for (int i = 0; i < smaller; i++) {
+        for (int j = 0; j < smaller; j++) {
+            std::cout << jaccardMatrix[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
 
     // write the jaccard matrix to the output file, only write the pairs with jaccard similarity > 0.1
     std::ofstream outputFile(argv[2]);
-    for (auto it = pair_to_jaccard.begin(); it != pair_to_jaccard.end(); it++) {
-        pair<int, int> pair = it->first;
-        double jaccard = it->second;
-        if (jaccard > 0.1) {
-            outputFile << pair.first << " " << pair.second << " " << jaccard << std::endl;
+    for (int i = 0; i < jaccardMatrix.size(); i++) {
+        for (int j = 0; j < jaccardMatrix[i].size(); j++) {
+            if (i == j) {
+                continue;
+            }
+            if (jaccardMatrix[i][j] < 0.1) {
+                continue;
+            }
+            outputFile << i << " " << j << " " << jaccardMatrix[i][j] << endl;
         }
     }
 
@@ -237,15 +235,11 @@ int main(int argc, char* argv[]) {
     outputFile.close();
 
     // show the first 10x10 elements in the intersection matrix
-    std::cout << "First 10x10 elements of the intersection list: " << std::endl;
-    for (int i = 0; i < 10; i++) {
-        for (int j = 0; j < 10; j++) {
-            auto pair = make_pair(i, j);
-            if (pair_to_intersection.find(pair) != pair_to_intersection.end()) {
-                std::cout << pair_to_intersection[pair] << " ";
-            } else {
-                std::cout << "0 ";
-            }
+    std::cout << "First 10x10 elements of the intersection matrix: " << std::endl;
+    smaller = std::min(10, (int)intersectionMatrix.size());
+    for (int i = 0; i < smaller; i++) {
+        for (int j = 0; j < smaller; j++) {
+            std::cout << intersectionMatrix[i][j] << " ";
         }
         std::cout << std::endl;
     }
