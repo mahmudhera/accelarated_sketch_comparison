@@ -21,8 +21,18 @@ typedef unsigned long long int hash_t;
 
 
 
+struct pair_hash {
+    template <class T1, class T2>
+    std::size_t operator () (const std::pair<T1, T2>& p) const {
+        auto hash1 = std::hash<T1>{}(p.first);
+        auto hash2 = std::hash<T2>{}(p.second);
+        return hash1 ^ (hash2 << 1); // combine hashes
+    }
+};
 
-unordered_map< pair<int, int>, int > computeIntersectionMatrix(vector<vector<hash_t>> sketches) {
+
+
+unordered_map< pair<int, int>, int, pair_hash > computeIntersectionMatrix(vector<vector<hash_t>> sketches) {
     
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -42,7 +52,7 @@ unordered_map< pair<int, int>, int > computeIntersectionMatrix(vector<vector<has
     std::chrono::duration<double> elapsed_seconds = end-start;
     std::cout << "Time taken to build the hash map: " << elapsed_seconds.count() << std::endl;
 
-    unordered_map< pair<int, int>, int > pair_to_intersection_count;
+    unordered_map< pair<int, int>, int, pair_hash > pair_to_intersection_count;
 
     for (auto it = all_hashes_to_sketch_idices.begin(); it != all_hashes_to_sketch_idices.end(); it++) {
         vector<int> sketch_indices = it->second;
@@ -169,8 +179,8 @@ std::vector<std::string> get_sketch_names(const std::string& filelist) {
 
 
 
-unordered_map< pair<int, int>, double > compute_jaccard(unordered_map< pair<int, int>, int > pair_to_intersection) {
-    unordered_map< pair<int, int>, double > pair_to_jaccard;
+unordered_map< pair<int, int>, double, pair_hash > compute_jaccard(unordered_map< pair<int, int>, int, pair_hash > pair_to_intersection) {
+    unordered_map< pair<int, int>, double, pair_hash > pair_to_jaccard;
     for (auto it = pair_to_intersection.begin(); it != pair_to_intersection.end(); it++) {
         pair<int, int> pair = it->first;
         int intersection = it->second;
@@ -208,10 +218,10 @@ int main(int argc, char* argv[]) {
 
 
     // create the intersection matrix
-    unordered_map< pair<int, int>, int > pair_to_intersection = computeIntersectionMatrix(sketches);
+    unordered_map< pair<int, int>, int, pair_hash > pair_to_intersection = computeIntersectionMatrix(sketches);
 
     // create the jaccard matrix
-    unordered_map< pair<int, int>, double > pair_to_jaccard = compute_jaccard(pair_to_intersection);
+    unordered_map< pair<int, int>, double, pair_hash > pair_to_jaccard = compute_jaccard(pair_to_intersection);
 
     // write the jaccard matrix to the output file, only write the pairs with jaccard similarity > 0.1
     std::ofstream outputFile(argv[2]);
