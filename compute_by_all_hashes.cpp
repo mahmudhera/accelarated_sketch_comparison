@@ -25,11 +25,13 @@ std::vector<std::string> sketch_names;
 vector<vector<hash_t>> sketches;
 int num_sketches;
 int num_threads = 1;
+unordered_map<hash_t, vector<int>> index;
+vector<vector<int>> intersectionMatrix;
+std::vector<std::vector<double>> jaccardMatrix;
 
 
 
-unordered_map<hash_t, vector<int>> compute_index_from_sketches() {
-    unordered_map<hash_t, vector<int>> index = unordered_map<hash_t, vector<int>>();
+void compute_index_from_sketches() {
     for (int i = 0; i < sketches.size(); i++) {
         for (int j = 0; j < sketches[i].size(); j++) {
             hash_t hash = sketches[i][j];
@@ -39,15 +41,13 @@ unordered_map<hash_t, vector<int>> compute_index_from_sketches() {
             index[hash].push_back(i);
         }
     }
-    return index;
 }
 
 
 
+void computeIntersectionMatrix() {
 
-vector<std::vector<int>> computeIntersectionMatrix(unordered_map<hash_t, vector<int>> index) {
-
-    vector<vector<int>> intersectionMatrix(num_sketches, vector<int>(num_sketches, 0));
+    intersectionMatrix = vector<vector<int>>(num_sketches, vector<int>(num_sketches, 0));
 
     for (auto it = index.begin(); it != index.end(); it++) {
         vector<int> sketch_indices = it->second;
@@ -59,8 +59,6 @@ vector<std::vector<int>> computeIntersectionMatrix(unordered_map<hash_t, vector<
             }
         }
     }
-
-    return intersectionMatrix;
 
 }
 
@@ -149,9 +147,6 @@ void read_sketches() {
 }
 
 
-
-
-
 void get_sketch_names(const std::string& filelist) {
     // the filelist is a file, where each line is a path to a sketch file
     std::ifstream file(filelist);
@@ -164,8 +159,7 @@ void get_sketch_names(const std::string& filelist) {
 
 
 
-std::vector<std::vector<double>> compute_jaccard(std::vector<std::vector<int>> &intersectionMatrix) {
-    std::vector<std::vector<double>> jaccardMatrix;
+void compute_jaccard() {
     for (int i = 0; i < intersectionMatrix.size(); i++) {
         jaccardMatrix.push_back(std::vector<double>(intersectionMatrix.size(), 0.0));
     }
@@ -184,7 +178,6 @@ std::vector<std::vector<double>> compute_jaccard(std::vector<std::vector<int>> &
         }
     }
 
-    return jaccardMatrix;
 }
 
 
@@ -211,19 +204,19 @@ int main(int argc, char* argv[]) {
 
     // create the index
     auto start = std::chrono::high_resolution_clock::now();
-    unordered_map<hash_t, vector<int>> index = compute_index_from_sketches();
+    compute_index_from_sketches();
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to create the index: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
     // create the intersection matrix
     start = std::chrono::high_resolution_clock::now();
-    std::vector<std::vector<int>> intersectionMatrix = computeIntersectionMatrix(index);
+    computeIntersectionMatrix();
     end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to create the intersection matrix: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
     // create the jaccard matrix
     start = std::chrono::high_resolution_clock::now();
-    std::vector<std::vector<double>> jaccardMatrix = compute_jaccard(intersectionMatrix);
+    compute_jaccard();
     end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to create the jaccard matrix: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
