@@ -6,6 +6,12 @@
 #include <algorithm>
 #include <unordered_set>
 #include <fstream>
+#include <string>
+#include <sstream>
+#include <chrono>
+#include <stdexcept>
+#include <cmath>
+#include <thread>
 
 #include "json.hpp"
 
@@ -40,6 +46,46 @@ unordered_map<hash_t, vector<int>> build_index_from_sketches(vector<vector<hash_
     std::cout << "Time taken to build the hash map: " << elapsed_seconds.count() << std::endl;
 
     return all_hashes_to_sketch_idices;
+}
+
+
+using MapType = unordered_map<hash_t, std::vector<int>>;
+
+void compute_intersection_one_chunk(MapType::iterator start, MapType::iterator end, int num_sketches, int id) {
+    vector< unordered_map<int, int> > intersection_vector_info(num_sketches, unordered_map<int, int>());
+
+    for (auto it = start; it != end; it++) {
+        vector<int> sketch_indices = it->second;
+        for (int i = 0; i < sketch_indices.size(); i++) {
+            if (intersection_vector_info[sketch_indices[i]].find(sketch_indices[i]) == intersection_vector_info[sketch_indices[i]].end()) {
+                intersection_vector_info[sketch_indices[i]][sketch_indices[i]] = 1;
+            } else {
+                intersection_vector_info[sketch_indices[i]][sketch_indices[i]]++;
+            }
+            for (int j = i + 1; j < sketch_indices.size(); j++) {
+                if (intersection_vector_info[sketch_indices[i]].find(sketch_indices[j]) == intersection_vector_info[sketch_indices[i]].end()) {
+                    intersection_vector_info[sketch_indices[i]][sketch_indices[j]] = 1;
+                } else {
+                    intersection_vector_info[sketch_indices[i]][sketch_indices[j]]++;
+                }
+                if (intersection_vector_info[sketch_indices[j]].find(sketch_indices[i]) == intersection_vector_info[sketch_indices[j]].end()) {
+                    intersection_vector_info[sketch_indices[j]][sketch_indices[i]] = 1;
+                } else {
+                    intersection_vector_info[sketch_indices[j]][sketch_indices[i]]++;
+                }
+            }
+        }
+    }
+
+    // create a random file, and write the intersection_vector_info to it
+    string random_string = "chunk_" + to_string(id);
+    ofstream random_file(random_string);
+    for (int i = 0; i < intersection_vector_info.size(); i++) {
+        for (auto it = intersection_vector_info[i].begin(); it != intersection_vector_info[i].end(); it++) {
+            random_file << i << " " << it->first << " " << it->second << endl;
+        }
+    }
+
 }
 
 
@@ -209,10 +255,54 @@ int main(int argc, char* argv[]) {
     std::cout << "Time taken to read the sketches: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_read - start).count() << " milliseconds" << std::endl;
 
     // build the index from the sketches
-    unordered_map<hash_t, vector<int>> all_hashes_to_sketch_idices = build_index_from_sketches(sketches);
+    unordered_map<hash_t, vector<int>> all_hashes_to_sketch_indices = build_index_from_sketches(sketches);
 
-    // create the intersection matrix
-    std::vector< unordered_map<int, int> > intersection_info = computeIntersection(all_hashes_to_sketch_idices, sketches.size());
+    auto now = std::chrono::high_resolution_clock::now();
+
+    // remove all files with name chunk_*
+    system("rm chunk_*");
+
+    // separate the index into 64 parts, each will be processed by a thread
+    int num_threads = 64;
+    size_t chunk_size = all_hashes_to_sketch_indices.size() / num_threads;
+    std::vector<std::thread> threads;
+    auto it = all_hashes_to_sketch_indices.begin();
+
+    for (int i = 0; i < num_threads; ++i) {
+        auto start_it = it;
+        std::advance(it, chunk_size);
+        if (i == num_threads - 1) {
+            it = all_hashes_to_sketch_indices.end();
+        }
+        threads.emplace_back(compute_intersection_one_chunk, start_it, it);
+    }
+
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
+    // now combine the results from the threads. filenames: chunk_0, chunk_1, ..., chunk_63
+    vector<unordered_map<int, int>> intersection_info = vector<unordered_map<int, int>>(sketches.size(), unordered_map<int, int>());
+
+    for (int i = 0; i < num_threads; i++) {
+        string filename = "chunk_" + to_string(i);
+        ifstream file(filename);
+        int sketch_index1, sketch_index2, intersection;
+        while (file >> sketch_index1 >> sketch_index2 >> intersection) {
+            if (intersection_info[sketch_index1].find(sketch_index2) == intersection_info[sketch_index1].end()) {
+                intersection_info[sketch_index1][sketch_index2] = intersection;
+            } else {
+                intersection_info[sketch_index1][sketch_index2] += intersection;
+            }
+        }
+        file.close();
+    }
+
+    // remove all files with name chunk_*
+    system("rm chunk_*");
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "Time taken to compute the intersection: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - now).count() << " milliseconds" << std::endl;
 
     // create the jaccard matrix
     vector<unordered_map<int, float>> jaccard_values = compute_jaccard(intersection_info);
