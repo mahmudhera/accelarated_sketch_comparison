@@ -170,10 +170,10 @@ std::vector<std::string> get_sketch_names(const std::string& filelist) {
 
 
 
-std::vector<std::vector<double>> compute_jaccard(std::vector< unordered_map<int, int> > &intersectionMatrix) {
-    std::vector<std::vector<double>> jaccardMatrix;
+vector<unordered_map<int, float>> compute_jaccard(std::vector< unordered_map<int, int> > &intersectionMatrix) {
+    vector<unordered_map<int, float>> jaccardMatrix = vector<unordered_map<int, float>>();
     for (int i = 0; i < intersectionMatrix.size(); i++) {
-        jaccardMatrix.push_back(std::vector<double>(intersectionMatrix.size(), 0.0));
+        jaccardMatrix.push_back(unordered_map<int, float>());
     }
 
     for (int i = 0; i < intersectionMatrix.size(); i++) {
@@ -215,29 +215,15 @@ int main(int argc, char* argv[]) {
     std::vector< unordered_map<int, int> > intersection_info = computeIntersectionMatrix(sketches);
 
     // create the jaccard matrix
-    std::vector<std::vector<double>> jaccardMatrix = compute_jaccard(intersection_info);
-
-    // show first 10x10 elements of the jaccard matrix
-    std::cout << "First 10x10 elements of the jaccard matrix: " << std::endl;
-    int smaller = std::min(10, (int)jaccardMatrix.size());
-    for (int i = 0; i < smaller; i++) {
-        for (int j = 0; j < smaller; j++) {
-            std::cout << jaccardMatrix[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
+    vector<unordered_map<int, float>> jaccardMatrix = compute_jaccard(intersection_info);
 
     // write the jaccard matrix to the output file, only write the pairs with jaccard similarity > 0.1
     std::ofstream outputFile(argv[2]);
     for (int i = 0; i < jaccardMatrix.size(); i++) {
-        for (int j = 0; j < jaccardMatrix[i].size(); j++) {
-            if (i == j) {
-                continue;
+        for (auto it = jaccardMatrix[i].begin(); it != jaccardMatrix[i].end(); it++) {
+            if (it->second > 0.1) {
+                outputFile << i << " " << it->first << " " << it->second << std::endl;
             }
-            if (jaccardMatrix[i][j] < 0.1) {
-                continue;
-            }
-            outputFile << i << " " << j << " " << jaccardMatrix[i][j] << endl;
         }
     }
 
@@ -253,3 +239,7 @@ int main(int argc, char* argv[]) {
     return 0;
 
 }
+
+
+
+// fcde5c8edc3f5e3dd77184bc5b8841230c8ce534: very fast, but memory usage is high
