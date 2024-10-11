@@ -54,7 +54,7 @@ void clear_index() {
 
 
 // query the sketches from start_index to end_index-1 against the pre-built hash_index
-void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_end_index, int thread_id, string out_dir) {
+void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_end_index, string output_filename) {
     for (int i = sketch_start_index; i < sketch_end_index; i++) {
         for (int j = 0; j < sketches[i].size(); j++) {
             hash_t hash = sketches[i][j];
@@ -67,13 +67,8 @@ void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_
         }
     }
 
-    // write the similarity values to file. filename: out_dir/id.txt, where id is thread id in 3 digits
-    string id_in_three_digits_str = to_string(thread_id);
-    while (id_in_three_digits_str.size() < 3) {
-        id_in_three_digits_str = "0" + id_in_three_digits_str;
-    }
-    string filename = out_dir + "/" + id_in_three_digits_str + ".txt";
-    ofstream outfile(filename);
+    // write the similarity values to file
+    ofstream outfile(output_filename);
 
     for (int i = sketch_start_index; i < sketch_end_index; i++) {
         for (int j = 0; j < num_sketches; j++) {
@@ -235,12 +230,12 @@ int main(int argc, char* argv[]) {
     std::cout << "Time taken to read the sketches: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_read - start_program).count() << " milliseconds" << std::endl;
 
     // allocate memory for the intersection matrix
-    intersectionMatrix = new int*[num_sketches];
+    auto dim = num_sketches/num_passes;
+    intersectionMatrix = new int*[dim];
     for (int i = 0; i < num_sketches; i++) {
-        intersectionMatrix[i] = new int[num_sketches];
-        for (int j = 0; j < num_sketches; j++) {
-            intersectionMatrix[i][j] = 0;
-        }
+        intersectionMatrix[i] = new int[dim];
+        // memset to zeros
+        memset(intersectionMatrix[i], 0, sizeof(int) * dim);
     }
 
     for (int x = 0; x < num_passes; x++) {
@@ -254,10 +249,7 @@ int main(int argc, char* argv[]) {
         compute_index_from_sketches(start_index_for_index, end_index_for_index);
 
         string dir_name(argv[2]);
-        string out_dir = dir_name + "/pass_" + to_string(x);
-
-        // create the output directory
-        std::string command = "mkdir -p " + out_dir;
+        string output_prefix = dir_name + "/pass_" + to_string(x);
 
         for (int y = 0; y < num_passes; y++) {
 
@@ -275,7 +267,8 @@ int main(int argc, char* argv[]) {
                 auto chunk_size_this_thread = chunk_size_for_intersection / num_threads;
                 int start_index = start_index_for_intersection + i * chunk_size_this_thread;
                 int end_index = (i == num_threads - 1) ? end_index_for_intersection : start_index_for_intersection + (i + 1) * chunk_size_this_thread;
-                threads.push_back(thread(compute_intersection_matrix_by_sketches, start_index, end_index, i, out_dir));
+                string output_filename = output_prefix + "_iter_" + to_string(y) + "_thread_" + to_string(i);
+                threads.push_back(thread(compute_intersection_matrix_by_sketches, start_index, end_index, output_filename));
             }
 
             for (int i = 0; i < num_threads; i++) {
@@ -291,7 +284,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Time taken overall: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start_program).count() << " milliseconds" << std::endl;
 
     // free memory of intersection matrix
-    for (int i = 0; i < num_sketches; i++) {
+    for (int i = 0; i < dim; i++) {
         delete[] intersectionMatrix[i];
     }
     delete[] intersectionMatrix;
