@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <fstream>
 #include <thread>
+#include <cassert>
 
 #include "json.hpp"
 
@@ -29,10 +30,14 @@ unordered_map<hash_t, vector<int>> hash_index;
 int ** intersectionMatrix;
 
 
+// create an index using the sketches from start_index to end_index-1
+void compute_index_from_sketches(int start_index, int end_index) {
+    // assert the start and end indices
+    assert(start_index >= 0 && start_index < num_sketches);
+    assert(end_index > start_index && end_index <= num_sketches);
 
-void compute_index_from_sketches() {
-    for (int i = 0; i < sketches.size(); i++) {
-        for (int j = 0; j < sketches[i].size(); j++) {
+    for (int i = start_index; i < end_index; i++) {
+        for (int j = start_index; j < end_index; j++) {
             hash_t hash = sketches[i][j];
             if (hash_index.find(hash) == hash_index.end()) {
                 hash_index[hash] = vector<int>();
@@ -43,26 +48,12 @@ void compute_index_from_sketches() {
 }
 
 
-using MapType = unordered_map<hash_t, vector<int>>;
-
-
-// not thread safe
-void computeIntersectionMatrix(MapType::iterator start, MapType::iterator end) {
-
-    for (auto it = start; it != end; it++) {
-        vector<int> sketch_indices = it->second;
-        for (int i = 0; i < sketch_indices.size(); i++) {
-            intersectionMatrix[sketch_indices[i]][sketch_indices[i]]++;
-            for (int j = i + 1; j < sketch_indices.size(); j++) {
-                intersectionMatrix[sketch_indices[i]][sketch_indices[j]]++;
-                intersectionMatrix[sketch_indices[j]][sketch_indices[i]]++;
-            }
-        }
-    }
-
+void clear_index() {
+    hash_index.clear();
 }
 
 
+// query the sketches from start_index to end_index-1 against the pre-built hash_index
 void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_end_index, int thread_id, string out_dir) {
     for (int i = sketch_start_index; i < sketch_end_index; i++) {
         for (int j = 0; j < sketches[i].size(); j++) {
@@ -192,44 +183,7 @@ void get_sketch_names(const std::string& filelist) {
 }
 
 
-int main(int argc, char* argv[]) {
-    
-    // command line arguments: filelist outputfile
-    if (argc != 4) {
-        std::cerr << "Usage: " << argv[0] << " <file_list> <out_dir> <num_threads>" << std::endl;
-        return 1;
-    }
-
-    auto start_program = std::chrono::high_resolution_clock::now();
-
-    num_threads = std::stoi(argv[3]);
-
-    // get the sketch names
-    get_sketch_names(argv[1]);
-
-    // read the sketches
-    read_sketches();
-    auto end_read = std::chrono::high_resolution_clock::now();
-    std::cout << "Time taken to read the sketches: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_read - start_program).count() << " milliseconds" << std::endl;
-
-    // create the index
-    auto start = std::chrono::high_resolution_clock::now();
-    compute_index_from_sketches();
-    auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Time taken to create the index: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
-
-    // create the intersection matrix
-    start = std::chrono::high_resolution_clock::now();
-
-    // allocate memory for the intersection matrix
-    intersectionMatrix = new int*[num_sketches];
-    for (int i = 0; i < num_sketches; i++) {
-        intersectionMatrix[i] = new int[num_sketches];
-        for (int j = 0; j < num_sketches; j++) {
-            intersectionMatrix[i][j] = 0;
-        }
-    }
-
+void show_space_usage() {
     // show the total space used by intersection matrix, the index, the sketches, sketch-names, in MB, all separately
     cout << "-----------------" << endl;
     size_t total_space = 0;
@@ -256,27 +210,80 @@ int main(int argc, char* argv[]) {
     }
     std::cout << "Total space used by sketch names: " << total_space / (1024 * 1024) << " MB" << std::endl;
     cout << "-----------------" << endl;
+}
 
 
-    // compute the intersection matrix using the function compute_intersection_matrix_by_sketches
-    // the function also writes the results to output directory
-    // each thread is assigned an id. the output file is named as <id>.txt
-    std::string out_dir = argv[2];
-    vector<thread> threads;
-    int chunk_size = num_sketches / num_threads;
-    for (int i = 0; i < num_threads; i++) {
-        int start_index = i * chunk_size;
-        int end_index = (i == num_threads - 1) ? num_sketches : (i + 1) * chunk_size;
-        threads.push_back( thread(compute_intersection_matrix_by_sketches, start_index, end_index, i, out_dir) );
-    }
-    for (int i = 0; i < num_threads; i++) {
-        threads[i].join();
+int main(int argc, char* argv[]) {
+    
+    // command line arguments: filelist outputfile
+    if (argc != 5) {
+        std::cerr << "Usage: " << argv[0] << " <file_list> <out_dir> <num_threads> <num_passes>" << std::endl;
+        return 1;
     }
 
-    end = std::chrono::high_resolution_clock::now();
-    std::cout << "Time taken to create the intersection matrix: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
+    auto start_program = std::chrono::high_resolution_clock::now();
+
+    num_threads = std::stoi(argv[3]);
+    int num_passes = std::stoi(argv[4]);
+
+    // get the sketch names
+    get_sketch_names(argv[1]);
+
+    // read the sketches
+    read_sketches();
+    auto end_read = std::chrono::high_resolution_clock::now();
+    std::cout << "Time taken to read the sketches: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_read - start_program).count() << " milliseconds" << std::endl;
+
+    // allocate memory for the intersection matrix
+    intersectionMatrix = new int*[num_sketches];
+    for (int i = 0; i < num_sketches; i++) {
+        intersectionMatrix[i] = new int[num_sketches];
+        for (int j = 0; j < num_sketches; j++) {
+            intersectionMatrix[i][j] = 0;
+        }
+    }
+
+    for (int x = 0; x < num_passes; x++) {
+        // clear the index
+        clear_index();
+
+        // create the index for sketches from x * num_sketches / num_passes to (x+1) * num_sketches / num_passes
+        auto chunk_size_for_index = num_sketches / num_passes;
+        auto start_index_for_index = x * chunk_size_for_index;
+        auto end_index_for_index = (x == num_passes - 1) ? num_sketches : (x + 1) * chunk_size_for_index;
+        compute_index_from_sketches(start_index_for_index, end_index_for_index);
+
+        string dir_name(argv[2]);
+        string out_dir = dir_name + "/pass_" + to_string(x);
+
+        for (int y = 0; y < num_passes; y++) {
+
+            cout << "Pass: " << x << " Iteration: " << y << endl;
+
+            // in this iteration, find the intersection matrix for sketches from y * num_sketches / num_passes to (y+1) * num_sketches / num_passes
+            auto chunk_size_for_intersection = num_sketches / num_passes;
+            auto start_index_for_intersection = y * chunk_size_for_intersection;
+            auto end_index_for_intersection = (y == num_passes - 1) ? num_sketches : (y + 1) * chunk_size_for_intersection;
+
+            vector<thread> threads;
+
+            // compute the intersection matrix using the function compute_intersection_matrix_by_sketches using threads
+            for (int i = 0; i < num_threads; i++) {
+                auto chunk_size_this_thread = chunk_size_for_intersection / num_threads;
+                int start_index = start_index_for_intersection + i * chunk_size_this_thread;
+                int end_index = (i == num_threads - 1) ? end_index_for_intersection : start_index_for_intersection + (i + 1) * chunk_size_this_thread;
+                threads.push_back(thread(compute_intersection_matrix_by_sketches, start_index, end_index, i, out_dir));
+            }
+
+            for (int i = 0; i < num_threads; i++) {
+                threads[i].join();
+            }
+
+        }
+    }
 
     // show time takes for processing only
+    auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken for processing: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - end_read).count() << " milliseconds" << std::endl;
     std::cout << "Time taken overall: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start_program).count() << " milliseconds" << std::endl;
 
@@ -285,7 +292,12 @@ int main(int argc, char* argv[]) {
         delete[] intersectionMatrix[i];
     }
     delete[] intersectionMatrix;
+
+    show_space_usage();
     
     return 0;
 
 }
+
+
+// b57d7400cabd71ad74b8bc62bae70c05eb767a0c : works okay, but projected memory usage: 9TB
