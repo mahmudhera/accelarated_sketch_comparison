@@ -28,6 +28,7 @@ int num_sketches;
 int num_threads = 1;
 unordered_map<hash_t, vector<int>> hash_index;
 int ** intersectionMatrix;
+int chunk_every_pass;
 
 
 // create an index using the sketches from start_index to end_index-1
@@ -61,7 +62,7 @@ void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_
             if (hash_index.find(hash) != hash_index.end()) {
                 vector<int> sketch_indices = hash_index[hash];
                 for (int k = 0; k < sketch_indices.size(); k++) {
-                    intersectionMatrix[i][sketch_indices[k]]++;
+                    intersectionMatrix[i%chunk_every_pass][sketch_indices[k]%chunk_every_pass]++;
                 }
             }
         }
@@ -75,10 +76,10 @@ void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_
             if (i == j) {
                 continue;
             }
-            if (intersectionMatrix[i][j] == 0) {
+            if (intersectionMatrix[i%chunk_every_pass][j%chunk_every_pass] == 0) {
                 continue;
             }
-            float jaccard = 1.0 * intersectionMatrix[i][j] / ( sketches[i].size() + sketches[j].size() - intersectionMatrix[i][j] );
+            float jaccard = 1.0 * intersectionMatrix[i%chunk_every_pass][j%chunk_every_pass] / ( sketches[i].size() + sketches[j].size() - intersectionMatrix[i%chunk_every_pass][j%chunk_every_pass] );
             if (jaccard < 0.1) {
                 continue;
             }
@@ -231,6 +232,7 @@ int main(int argc, char* argv[]) {
 
     // allocate memory for the intersection matrix
     auto dim = num_sketches/num_passes;
+    chunk_every_pass = num_sketches / num_passes;
     intersectionMatrix = new int*[dim];
     for (int i = 0; i < num_sketches; i++) {
         intersectionMatrix[i] = new int[dim];
