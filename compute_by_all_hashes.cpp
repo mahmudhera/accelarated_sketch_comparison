@@ -27,7 +27,6 @@ int num_sketches;
 int num_threads = 1;
 unordered_map<hash_t, vector<int>> hash_index;
 int ** intersectionMatrix;
-double ** jaccardMatrix;
 
 
 
@@ -193,27 +192,6 @@ void get_sketch_names(const std::string& filelist) {
 }
 
 
-
-void compute_jaccard() {
-    
-    for (int i = 0; i < num_sketches; i++) {
-        for (int j = 0; j < num_sketches; j++) {
-            if (i == j) {
-                jaccardMatrix[i][j] = 1.0;
-                continue;
-            }
-            if ((intersectionMatrix[i][i] + intersectionMatrix[j][j] - intersectionMatrix[i][j]) == 0) {
-                jaccardMatrix[i][j] = 0.0;
-                continue;
-            } 
-            jaccardMatrix[i][j] = 1.0 * intersectionMatrix[i][j] / (intersectionMatrix[i][i] + intersectionMatrix[j][j] - intersectionMatrix[i][j]);
-        }
-    }
-
-}
-
-
-
 int main(int argc, char* argv[]) {
     
     // command line arguments: filelist outputfile
@@ -251,6 +229,34 @@ int main(int argc, char* argv[]) {
             intersectionMatrix[i][j] = 0;
         }
     }
+
+    // show the total space used by intersection matrix, the index, the sketches, sketch-names, in MB, all separately
+    cout << "-----------------" << endl;
+    size_t total_space = 0;
+    for (int i = 0; i < num_sketches; i++) {
+        total_space += sizeof(int) * num_sketches;
+    }
+    std::cout << "Total space used by intersection matrix: " << total_space / (1024 * 1024) << " MB" << std::endl;
+
+    total_space = 0;
+    for (auto it = hash_index.begin(); it != hash_index.end(); it++) {
+        total_space += sizeof(hash_t) + sizeof(int) * it->second.size();
+    }
+    std::cout << "Total space used by the hash-index: " << total_space / (1024 * 1024) << " MB" << std::endl;
+
+    total_space = 0;
+    for (int i = 0; i < num_sketches; i++) {
+        total_space += sizeof(hash_t) * sketches[i].size();
+    }
+    std::cout << "Total space used by sketches: " << total_space / (1024 * 1024) << " MB" << std::endl;
+
+    total_space = 0;
+    for (int i = 0; i < num_sketches; i++) {
+        total_space += sketch_names[i].size();
+    }
+    std::cout << "Total space used by sketch names: " << total_space / (1024 * 1024) << " MB" << std::endl;
+    cout << "-----------------" << endl;
+
 
     // compute the intersection matrix using the function compute_intersection_matrix_by_sketches
     // the function also writes the results to output directory
