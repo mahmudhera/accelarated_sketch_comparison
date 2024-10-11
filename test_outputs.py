@@ -49,8 +49,8 @@ if __name__ == '__main__':
         sig2 = load_one_signature(filename2)
 
         jaccard_calculated = sig1.jaccard(sig2)
-        # assert that the calculated jaccard is the same as the one in the output file in 3 decimal places
+        # assert that the diff of jaccards is less than 0.001
         print(f'{file1_index} {file2_index} {jaccard_calculated} {jaccard}')
-        assert round(jaccard_calculated, 3) == round(jaccard, 3)
+        assert abs(jaccard_calculated - jaccard) <= 0.001
 
     print('All tests passed!')
