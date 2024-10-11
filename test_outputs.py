@@ -36,8 +36,8 @@ if __name__ == '__main__':
 
     # iterate over the rows of the output file to be tested
     for i, row in df.iterrows():
-        file1_index = files[row['file1_index']]
-        file2_index = files[row['file2_index']]
+        file1_index = int(files[row['file1_index']])
+        file2_index = int(files[row['file2_index']])
         jaccard = row['jaccard']
         
         filename1 = files[file1_index].strip()
