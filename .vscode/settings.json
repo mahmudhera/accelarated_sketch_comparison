@@ -64,5 +64,6 @@
         "algorithm": "cpp",
         "hash_map": "cpp",
         "set": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "/Users/mbr5797/PSU/Research/accelarated_sketch_comparison/eigen/demos/mandelbrot"
 }
