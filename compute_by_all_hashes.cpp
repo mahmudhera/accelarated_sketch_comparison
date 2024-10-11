@@ -256,6 +256,9 @@ int main(int argc, char* argv[]) {
         string dir_name(argv[2]);
         string out_dir = dir_name + "/pass_" + to_string(x);
 
+        // create the output directory
+        std::string command = "mkdir -p " + out_dir;
+
         for (int y = 0; y < num_passes; y++) {
 
             cout << "Pass: " << x << " Iteration: " << y << endl;
