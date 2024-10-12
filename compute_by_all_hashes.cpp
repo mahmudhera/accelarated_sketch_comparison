@@ -275,7 +275,7 @@ int main(int argc, char* argv[]) {
         
         // create threads
         vector<thread> threads;
-        int chunk_size = ceil(1.0 * num_sketches_this_pass / num_threads);
+        int chunk_size = num_sketches_this_pass / num_threads;
         for (int i = 0; i < num_threads; i++) {
             int start_index_this_thread = sketch_idx_start_this_pass + i * chunk_size;
             int end_index_this_thread = (i == num_threads - 1) ? sketch_idx_end_this_pass : sketch_idx_start_this_pass + (i + 1) * chunk_size;
