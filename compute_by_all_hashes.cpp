@@ -45,6 +45,34 @@ void compute_index_from_sketches() {
             hash_index[hash].push_back(i);
         }
     }
+
+    string filename = "hash_index.txt";
+    ofstream outfile(filename);
+    for (auto it = hash_index.begin(); it != hash_index.end(); it++) {
+        outfile << it->first << " ";
+        for (int i = 0; i < it->second.size(); i++) {
+            outfile << it->second[i] << " ";
+        }
+        outfile << endl;
+    }
+    outfile.close();
+
+}
+
+
+void load_hash_index() {
+    string filename = "hash_index.txt";
+    ifstream infile(filename);
+    hash_t hash;
+    while (infile >> hash) {
+        vector<int> sketch_indices;
+        int sketch_index;
+        while (infile >> sketch_index) {
+            sketch_indices.push_back(sketch_index);
+        }
+        hash_index[hash] = sketch_indices;
+    }
+    infile.close();
 }
 
 
@@ -261,8 +289,8 @@ void show_space_usages(int num_passes) {
 int main(int argc, char* argv[]) {
     
     // command line arguments: filelist outputfile
-    if (argc != 7) {
-        std::cerr << "Usage: " << argv[0] << " <file_list> <out_dir> <num_threads> <num_passes> <containment_threshold> <test_mode>" << std::endl;
+    if (argc != 8) {
+        std::cerr << "Usage: " << argv[0] << " <file_list> <out_dir> <num_threads> <num_passes> <containment_threshold> <test_mode> <load_hash_index>" << std::endl;
         return 1;
     }
 
@@ -272,6 +300,7 @@ int main(int argc, char* argv[]) {
     int num_passes = std::stoi(argv[4]);
     containment_threshold = std::stof(argv[5]);
     bool test_mode = std::stoi(argv[6]);
+    bool load_hash_index_flag = std::stoi(argv[7]);
 
     // get the sketch names
     get_sketch_names(argv[1]);
@@ -281,11 +310,15 @@ int main(int argc, char* argv[]) {
     auto end_read = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to read the sketches: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_read - start_program).count() << " milliseconds" << std::endl;
 
-    // create the index
+    // create the index if needed. otherwise, load from file
     auto start = std::chrono::high_resolution_clock::now();
-    compute_index_from_sketches();
+    if (load_hash_index_flag) {
+        load_hash_index();
+    } else {
+        compute_index_from_sketches();
+    }
     auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Time taken to create the index: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
+    std::cout << "Time taken to create/load the index: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
     // create the intersection matrix
     start = std::chrono::high_resolution_clock::now();
