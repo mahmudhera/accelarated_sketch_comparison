@@ -29,7 +29,7 @@ int num_sketches;
 int num_threads = 1;
 unordered_map<hash_t, vector<int>> hash_index;
 int ** intersectionMatrix;
-float jaccard_threshold = 0.1;
+float containment_threshold = 0.01;
 int count_empty_sketch = 0;
 mutex mutex_count_empty_sketch;
 
@@ -101,7 +101,8 @@ void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_
             double containment_i_in_j = 1.0 * intersectionMatrix[i-negative_offset][j] / sketches[i].size();
             double containment_j_in_i = 1.0 * intersectionMatrix[i-negative_offset][j] / sketches[j].size();
             
-            if (jaccard < jaccard_threshold) {
+            // containment_i_in_j is the containment of query in target, i is the query
+            if (containment_i_in_j < containment_threshold) {
                 continue;
             }
 
@@ -261,7 +262,7 @@ int main(int argc, char* argv[]) {
     
     // command line arguments: filelist outputfile
     if (argc != 7) {
-        std::cerr << "Usage: " << argv[0] << " <file_list> <out_dir> <num_threads> <num_passes> <threshold> <test_mode>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <file_list> <out_dir> <num_threads> <num_passes> <containment_threshold> <test_mode>" << std::endl;
         return 1;
     }
 
@@ -269,7 +270,7 @@ int main(int argc, char* argv[]) {
 
     num_threads = std::stoi(argv[3]);
     int num_passes = std::stoi(argv[4]);
-    jaccard_threshold = std::stof(argv[5]);
+    containment_threshold = std::stof(argv[5]);
     bool test_mode = std::stoi(argv[6]);
 
     // get the sketch names
