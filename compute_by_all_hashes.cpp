@@ -27,6 +27,7 @@ int num_sketches;
 int num_threads = 1;
 unordered_map<hash_t, vector<int>> hash_index;
 int ** intersectionMatrix;
+float jaccard_threshold = 0.1;
 
 
 
@@ -93,7 +94,7 @@ void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_
                 continue;
             }
             float jaccard = 1.0 * intersectionMatrix[i-negative_offset][j] / ( sketches[i].size() + sketches[j].size() - intersectionMatrix[i-negative_offset][j] );
-            if (jaccard < 0.1) {
+            if (jaccard < jaccard_threshold) {
                 continue;
             }
             outfile << i << " " << j << " " << jaccard << endl;
@@ -225,8 +226,8 @@ void show_space_usages(int num_passes) {
 int main(int argc, char* argv[]) {
     
     // command line arguments: filelist outputfile
-    if (argc != 5) {
-        std::cerr << "Usage: " << argv[0] << " <file_list> <out_dir> <num_threads> <num_passes>" << std::endl;
+    if (argc != 7) {
+        std::cerr << "Usage: " << argv[0] << " <file_list> <out_dir> <num_threads> <num_passes> <threshold> <test_mode>" << std::endl;
         return 1;
     }
 
@@ -234,6 +235,8 @@ int main(int argc, char* argv[]) {
 
     num_threads = std::stoi(argv[3]);
     int num_passes = std::stoi(argv[4]);
+    jaccard_threshold = std::stof(argv[5]);
+    bool test_mode = std::stoi(argv[6]);
 
     // get the sketch names
     get_sketch_names(argv[1]);
@@ -258,6 +261,13 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < num_sketches_each_pass + 1; i++) {
         intersectionMatrix[i] = new int[num_sketches];
     }
+
+    // in test mode, exit now
+    if (test_mode) {
+        show_space_usages(num_passes);
+        return 0;
+    }
+    
 
     for (int pass_id = 0; pass_id < num_passes; pass_id++) {
         // set zeros in the intersection matrix
