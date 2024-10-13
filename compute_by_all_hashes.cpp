@@ -106,8 +106,8 @@ void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_
                 continue;
             }
 
-            string genome_name1 = genome_names[i];
-            string genome_name2 = genome_names[j];
+            string genome_name1 = "\"" + genome_names[i] + "\"";
+            string genome_name2 = "\"" + genome_names[j] + "\"";
             outfile << genome_name1 << "," << genome_name2 << "," << jaccard << "," << containment_i_in_j << "," << containment_j_in_i << endl;
         }
     }
