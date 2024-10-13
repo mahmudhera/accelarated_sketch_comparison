@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <fstream>
 #include <thread>
+#include <mutex>
 
 #include "json.hpp"
 
@@ -28,6 +29,8 @@ int num_threads = 1;
 unordered_map<hash_t, vector<int>> hash_index;
 int ** intersectionMatrix;
 float jaccard_threshold = 0.1;
+int count_empty_sketch = 0;
+mutex mutex_count_empty_sketch;
 
 
 
@@ -161,6 +164,11 @@ std::vector<hash_t> read_min_hashes(const std::string& json_filename) {
 void read_sketches_one_chunk(int start_index, int end_index) {
     for (int i = start_index; i < end_index; i++) {
         sketches[i] = read_min_hashes(sketch_names[i]);
+        if (sketches[i].size() == 0) {
+            mutex_count_empty_sketch.lock();
+            count_empty_sketch++;
+            mutex_count_empty_sketch.unlock();
+        }
     }
 }
 
@@ -179,6 +187,16 @@ void read_sketches() {
     for (int i = 0; i < num_threads; i++) {
         threads[i].join();
     }
+    // show the number of empty sketches
+    cout << "Number of empty sketches: " << count_empty_sketch << endl;
+
+    // show the ids of these empty sketches
+    for (int i = 0; i < num_sketches; i++) {
+        if (sketches[i].size() == 0) {
+            cout << i << " ";
+        }
+    }
+    cout << endl;
 }
 
 
