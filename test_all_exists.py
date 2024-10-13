@@ -52,3 +52,7 @@ def main():
             print('Error: file_index1 =', file_index1, 'num_rows_frackmc =', num_rows_frackmc, 'num_rows_multisearch =', num_rows_multisearch)
 
 
+
+
+if __name__ == '__main__':
+    main()
