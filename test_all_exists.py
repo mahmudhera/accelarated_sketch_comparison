@@ -47,8 +47,8 @@ def main():
         num_rows_multisearch = len(rows)
 
         # check if these two numbers are the same
-        print( file_index1, name_list[file_index1], num_rows_frackmc, num_rows_multisearch )
-        if num_rows_frackmc != num_rows_multisearch:
+        print( file_index1, name_list[file_index1], num_rows_frackmc+1, num_rows_multisearch )
+        if num_rows_frackmc+1 != num_rows_multisearch:
             print('Error: file_index1 =', file_index1, 'num_rows_frackmc =', num_rows_frackmc, 'num_rows_multisearch =', num_rows_multisearch)
 
 
