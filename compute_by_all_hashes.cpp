@@ -93,23 +93,6 @@ void load_hash_index() {
 using MapType = unordered_map<hash_t, vector<int>>;
 
 
-// not thread safe
-void computeIntersectionMatrix(MapType::iterator start, MapType::iterator end) {
-
-    for (auto it = start; it != end; it++) {
-        vector<int> sketch_indices = it->second;
-        for (int i = 0; i < sketch_indices.size(); i++) {
-            intersectionMatrix[sketch_indices[i]][sketch_indices[i]]++;
-            for (int j = i + 1; j < sketch_indices.size(); j++) {
-                intersectionMatrix[sketch_indices[i]][sketch_indices[j]]++;
-                intersectionMatrix[sketch_indices[j]][sketch_indices[i]]++;
-            }
-        }
-    }
-
-}
-
-
 void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_end_index, int thread_id, string out_dir, int pass_id, int negative_offset) {
     for (int i = sketch_start_index; i < sketch_end_index; i++) {
         for (int j = 0; j < sketches[i].size(); j++) {
