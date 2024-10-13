@@ -36,6 +36,8 @@ mutex mutex_count_empty_sketch;
 
 
 void compute_index_from_sketches() {
+    
+    // create the index using all the hashes
     for (int i = 0; i < sketches.size(); i++) {
         for (int j = 0; j < sketches[i].size(); j++) {
             hash_t hash = sketches[i][j];
@@ -46,6 +48,18 @@ void compute_index_from_sketches() {
         }
     }
 
+    // remove the hashes that only appear in one sketch
+    vector<hash_t> hashes_to_remove;
+    for (auto it = hash_index.begin(); it != hash_index.end(); it++) {
+        if (it->second.size() == 1) {
+            hashes_to_remove.push_back(it->first);
+        }
+    }
+    for (int i = 0; i < hashes_to_remove.size(); i++) {
+        hash_index.erase(hashes_to_remove[i]);
+    }
+
+    // write the hash index to file
     string filename = "hash_index.txt";
     ofstream outfile(filename);
     for (auto it = hash_index.begin(); it != hash_index.end(); it++) {
@@ -119,12 +133,26 @@ void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_
 
     for (int i = sketch_start_index; i < sketch_end_index; i++) {
         for (int j = 0; j < num_sketches; j++) {
+            // skip obvious cases
             if (i == j) {
                 continue;
             }
+
+            // if nothing in the intersection, then skip
             if (intersectionMatrix[i-negative_offset][j] == 0) {
                 continue;
             }
+
+            // if either of the sketches is empty, then skip
+            if (sketches[i].size() == 0 || sketches[j].size() == 0) {
+                continue;
+            }
+
+            // if the divisor in the jaccard calculation is 0, then skip
+            if (sketches[i].size() + sketches[j].size() - intersectionMatrix[i-negative_offset][j] == 0) {
+                continue;
+            }
+
             double jaccard = 1.0 * intersectionMatrix[i-negative_offset][j] / ( sketches[i].size() + sketches[j].size() - intersectionMatrix[i-negative_offset][j] );
             double containment_i_in_j = 1.0 * intersectionMatrix[i-negative_offset][j] / sketches[i].size();
             double containment_j_in_i = 1.0 * intersectionMatrix[i-negative_offset][j] / sketches[j].size();
@@ -134,9 +162,7 @@ void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_
                 continue;
             }
 
-            string genome_name1 = "\"" + genome_names[i] + "\"";
-            string genome_name2 = "\"" + genome_names[j] + "\"";
-            outfile << genome_name1 << "," << genome_name2 << "," << jaccard << "," << containment_i_in_j << "," << containment_j_in_i << endl;
+            outfile << i << "," << j << "," << jaccard << "," << containment_i_in_j << "," << containment_j_in_i << endl;
         }
     }
 
@@ -286,6 +312,25 @@ void show_space_usages(int num_passes) {
 }
 
 
+void write_all_genome_names() {
+    string all_genome_names = "all_genome_names.txt";
+    ofstream outfile(all_genome_names);
+    for (int i = 0; i < num_sketches; i++) {
+        outfile << genome_names[i] << endl;
+    }
+    outfile.close();
+}
+
+
+void cleanup(int num_sketches_each_pass) {
+    // free memory of intersection matrix
+    for (int i = 0; i < num_sketches_each_pass + 1; i++) {
+        delete[] intersectionMatrix[i];
+    }
+    delete[] intersectionMatrix;
+}
+
+
 int main(int argc, char* argv[]) {
     
     // command line arguments: filelist outputfile
@@ -303,9 +348,11 @@ int main(int argc, char* argv[]) {
     bool load_hash_index_flag = std::stoi(argv[7]);
 
     // get the sketch names
+    cout << "Getting sketch names..." << endl;
     get_sketch_names(argv[1]);
 
     // read the sketches
+    cout << "Reading sketches..." << endl;
     read_sketches();
     auto end_read = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to read the sketches: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_read - start_program).count() << " milliseconds" << std::endl;
@@ -313,8 +360,10 @@ int main(int argc, char* argv[]) {
     // create the index if needed. otherwise, load from file
     auto start = std::chrono::high_resolution_clock::now();
     if (load_hash_index_flag) {
+        cout << "Loading hash index..." << endl;
         load_hash_index();
     } else {
+        cout << "Creating hash index..." << endl;
         compute_index_from_sketches();
     }
     auto end = std::chrono::high_resolution_clock::now();
@@ -332,6 +381,7 @@ int main(int argc, char* argv[]) {
 
     // in test mode, exit now
     if (test_mode) {
+        cleanup(num_sketches_each_pass);
         show_space_usages(num_passes);
         return 0;
     }
@@ -366,7 +416,7 @@ int main(int argc, char* argv[]) {
         }
 
         // show progress
-        std::cout << "Pass " << pass_id << " done." << std::endl;
+        std::cout << "Pass " << pass_id << "/" << num_passes << " done." << std::endl;
     }
 
     
@@ -377,14 +427,14 @@ int main(int argc, char* argv[]) {
     std::cout << "Time taken for processing: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - end_read).count() << " milliseconds" << std::endl;
     std::cout << "Time taken overall: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start_program).count() << " milliseconds" << std::endl;
 
-    // free memory of intersection matrix
-    for (int i = 0; i < num_sketches_each_pass + 1; i++) {
-        delete[] intersectionMatrix[i];
-    }
-    delete[] intersectionMatrix;
+    // cleanup
+    cleanup(num_sketches_each_pass);
 
     // show space usages
     show_space_usages(num_passes);
+
+    // write all genome names
+    write_all_genome_names();
     
     return 0;
 
