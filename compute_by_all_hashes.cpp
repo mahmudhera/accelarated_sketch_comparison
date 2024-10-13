@@ -23,6 +23,7 @@ typedef unsigned long long int hash_t;
 
 
 std::vector<std::string> sketch_names;
+std::vector<std::string> genome_names;
 vector<vector<hash_t>> sketches;
 int num_sketches;
 int num_threads = 1;
@@ -96,11 +97,17 @@ void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_
             if (intersectionMatrix[i-negative_offset][j] == 0) {
                 continue;
             }
-            float jaccard = 1.0 * intersectionMatrix[i-negative_offset][j] / ( sketches[i].size() + sketches[j].size() - intersectionMatrix[i-negative_offset][j] );
+            double jaccard = 1.0 * intersectionMatrix[i-negative_offset][j] / ( sketches[i].size() + sketches[j].size() - intersectionMatrix[i-negative_offset][j] );
+            double containment_i_in_j = 1.0 * intersectionMatrix[i-negative_offset][j] / sketches[i].size();
+            double containment_j_in_i = 1.0 * intersectionMatrix[i-negative_offset][j] / sketches[j].size();
+            
             if (jaccard < jaccard_threshold) {
                 continue;
             }
-            outfile << i << " " << j << " " << jaccard << endl;
+
+            string genome_name1 = genome_names[i];
+            string genome_name2 = genome_names[j];
+            outfile << genome_name1 << "," << genome_name2 << "," << jaccard << "," << containment_i_in_j << "," << containment_j_in_i << endl;
         }
     }
 
@@ -130,12 +137,13 @@ string decompressGzip(const std::string& filename) {
 }
 
 
-std::vector<hash_t> read_min_hashes(const std::string& json_filename) {
+pair<std::vector<hash_t>, string> read_min_hashes(const std::string& json_filename) {
     // if filename contains gz
     if (json_filename.find(".gz") != std::string::npos) {
         auto jsonData = json::parse(decompressGzip(json_filename));
         std::vector<hash_t> min_hashes = jsonData[0]["signatures"][0]["mins"];
-        return min_hashes;
+        std::string genome_name = jsonData[0]["name"];
+        return {min_hashes, genome_name};
     }
 
     // Open the JSON file
@@ -153,17 +161,20 @@ std::vector<hash_t> read_min_hashes(const std::string& json_filename) {
 
     // Access and print values
     std::vector<hash_t> min_hashes = jsonData[0]["signatures"][0]["mins"];
+    std::string genome_name = jsonData[0]["name"];
 
     // Close the file
     inputFile.close();
 
-    return min_hashes;
+    return {min_hashes, genome_name};
 }
 
 
 void read_sketches_one_chunk(int start_index, int end_index) {
     for (int i = start_index; i < end_index; i++) {
-        sketches[i] = read_min_hashes(sketch_names[i]);
+        auto min_hashes_genome_name = read_min_hashes(sketch_names[i]);
+        sketches[i] = min_hashes_genome_name.first;
+        genome_names[i] = min_hashes_genome_name.second;
         if (sketches[i].size() == 0) {
             mutex_count_empty_sketch.lock();
             count_empty_sketch++;
@@ -177,6 +188,11 @@ void read_sketches() {
     for (int i = 0; i < num_sketches; i++) {
         sketches.push_back( vector<hash_t>() );
     }
+    // initialize genome_names vector using empty strings
+    for (int i = 0; i < num_sketches; i++) {
+        genome_names.push_back("");
+    }
+
     int chunk_size = num_sketches / num_threads;
     vector<thread> threads;
     for (int i = 0; i < num_threads; i++) {
