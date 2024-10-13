@@ -20,14 +20,16 @@ using json = nlohmann::json;
 using namespace std;
 
 typedef unsigned long long int hash_t;
+typedef unsigned int uint;
 
 
 std::vector<std::string> sketch_names;
 std::vector<std::string> genome_names;
 vector<vector<hash_t>> sketches;
+vector<vector<uint>> abundance_vectors;
 int num_sketches;
 int num_threads = 1;
-unordered_map<hash_t, vector<int>> hash_index;
+unordered_map<hash_t, vector<pair<int, uint>>> hash_index;
 int ** intersectionMatrix;
 float containment_threshold = 0.01;
 int count_empty_sketch = 0;
@@ -40,9 +42,10 @@ void compute_index_from_sketches() {
         for (int j = 0; j < sketches[i].size(); j++) {
             hash_t hash = sketches[i][j];
             if (hash_index.find(hash) == hash_index.end()) {
-                hash_index[hash] = vector<int>();
+                hash_index[hash] = vector<pair<int, uint>>();
             }
-            hash_index[hash].push_back(i);
+            // add the sketch index and abundance to the hash_index
+            hash_index[hash].push_back(make_pair(i, abundance_vectors[i][j]));
         }
     }
 }
@@ -51,31 +54,17 @@ void compute_index_from_sketches() {
 using MapType = unordered_map<hash_t, vector<int>>;
 
 
-// not thread safe
-void computeIntersectionMatrix(MapType::iterator start, MapType::iterator end) {
-
-    for (auto it = start; it != end; it++) {
-        vector<int> sketch_indices = it->second;
-        for (int i = 0; i < sketch_indices.size(); i++) {
-            intersectionMatrix[sketch_indices[i]][sketch_indices[i]]++;
-            for (int j = i + 1; j < sketch_indices.size(); j++) {
-                intersectionMatrix[sketch_indices[i]][sketch_indices[j]]++;
-                intersectionMatrix[sketch_indices[j]][sketch_indices[i]]++;
-            }
-        }
-    }
-
-}
-
-
 void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_end_index, int thread_id, string out_dir, int pass_id, int negative_offset) {
     for (int i = sketch_start_index; i < sketch_end_index; i++) {
         for (int j = 0; j < sketches[i].size(); j++) {
             hash_t hash = sketches[i][j];
+            uint abundance_query = abundance_vectors[i][j];
             if (hash_index.find(hash) != hash_index.end()) {
-                vector<int> sketch_indices = hash_index[hash];
-                for (int k = 0; k < sketch_indices.size(); k++) {
-                    intersectionMatrix[i-negative_offset][sketch_indices[k]]++;
+                vector<pair<int, uint>> vector_sketch_indices_abundances = hash_index[hash];
+                for (int k = 0; k < vector_sketch_indices_abundances.size(); k++) {
+                    int sketch_index = vector_sketch_indices_abundances[k].first;
+                    uint abundance_target = vector_sketch_indices_abundances[k].second;
+                    intersectionMatrix[i-negative_offset][sketch_index] += min(abundance_query, abundance_target);
                 }
             }
         }
@@ -138,13 +127,14 @@ string decompressGzip(const std::string& filename) {
 }
 
 
-pair<std::vector<hash_t>, string> read_min_hashes(const std::string& json_filename) {
+tuple<vector<hash_t>, string, vector<uint>> read_min_hashes(const std::string& json_filename) {
     // if filename contains gz
     if (json_filename.find(".gz") != std::string::npos) {
         auto jsonData = json::parse(decompressGzip(json_filename));
         std::vector<hash_t> min_hashes = jsonData[0]["signatures"][0]["mins"];
         std::string genome_name = jsonData[0]["name"];
-        return {min_hashes, genome_name};
+        std::vector<uint> abundances_this_sketch = jsonData[0]["signatures"][0]["abundances"];
+        return {min_hashes, genome_name, abundances_this_sketch};
     }
 
     // Open the JSON file
@@ -163,19 +153,33 @@ pair<std::vector<hash_t>, string> read_min_hashes(const std::string& json_filena
     // Access and print values
     std::vector<hash_t> min_hashes = jsonData[0]["signatures"][0]["mins"];
     std::string genome_name = jsonData[0]["name"];
+    std::vector<uint> abundances = jsonData[0]["signatures"][0]["abundances"];
 
     // Close the file
     inputFile.close();
 
-    return {min_hashes, genome_name};
+    return {min_hashes, genome_name, abundances};
 }
 
 
 void read_sketches_one_chunk(int start_index, int end_index) {
     for (int i = start_index; i < end_index; i++) {
         auto min_hashes_genome_name = read_min_hashes(sketch_names[i]);
-        sketches[i] = min_hashes_genome_name.first;
-        genome_names[i] = min_hashes_genome_name.second;
+        
+        // min_hashes_genome_name is a tuple of min_hashes, genome_name, and abundances
+        vector<hash_t> min_hashes = get<0>(min_hashes_genome_name);
+        string genome_name = get<1>(min_hashes_genome_name);
+        vector<uint> abundances_this_sketch = get<2>(min_hashes_genome_name);
+
+        // add the min_hashes to the sketches vector
+        sketches[i] = min_hashes;
+
+        // add the genome name to the genome_names vector
+        genome_names[i] = genome_name;
+
+        // add the abundances to the abundances vector
+        abundance_vectors[i] = abundances_this_sketch;
+
         if (sketches[i].size() == 0) {
             mutex_count_empty_sketch.lock();
             count_empty_sketch++;
@@ -356,3 +360,6 @@ int main(int argc, char* argv[]) {
     return 0;
 
 }
+
+
+// 22409122b20702fd008413959b7d765e655239e2
