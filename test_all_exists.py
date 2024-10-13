@@ -37,6 +37,8 @@ def main():
 
     num_files = len(file_path_list)
 
+    num_errors = 0
+
     for file_index1 in range(num_files):
         # find the number of rows in frackmc_df where file_index1 is the same as file_index1
         rows = frackmc_df[frackmc_df['file_index1'] == file_index1]
@@ -47,9 +49,12 @@ def main():
         num_rows_multisearch = len(rows)
 
         # check if these two numbers are the same
-        print( file_index1, name_list[file_index1], num_rows_frackmc+1, num_rows_multisearch )
+        print( file_index1, num_rows_frackmc+1, num_rows_multisearch, name_list[file_index1] )
         if num_rows_frackmc+1 != num_rows_multisearch:
             print('Error: file_index1 =', file_index1, 'num_rows_frackmc =', num_rows_frackmc, 'num_rows_multisearch =', num_rows_multisearch)
+            num_errors += 1
+        
+    print(f'Mismatch found in {num_errors} query files')
 
 
 
