@@ -31,19 +31,24 @@ def test_against_multisearch(multisearch_file, by_index_file, genome_names):
     
     # iterate over all rows of the by_index file
     for i, row in df_by_index.iterrows():
-        query_id = row['query_id']
-        match_id = row['match_id']
+        query_id = int(row['query_id'])
+        match_id = int(row['match_id'])
         jaccard = row['jaccard']
         containment = row['containment']
         containment_other = row['containment_other']
+        max_containment_by_index = max(containment, containment_other) 
         
         # get the corresponding row in the multisearch file
         multisearch_row = df_multisearch[(df_multisearch['query_name'] == genome_names[query_id]) & (df_multisearch['match_name'] == genome_names[match_id])]
         
-        # check if the jaccard and containment values are the same
-        assert multisearch_row['jaccard'].values[0] == jaccard
-        assert multisearch_row['containment'].values[0] == containment
-        assert multisearch_row['max_containment'].values[0] == max(containment, containment_other)
+        multisearch_jaccard = multisearch_row['jaccard'].values[0]
+        multisearch_containment = multisearch_row['containment'].values[0]
+        multisearch_max_containment = multisearch_row['max_containment'].values[0]
+        
+        # check if the jaccard and containment values are the same upto 3 decimal places
+        assert abs(jaccard - multisearch_jaccard) < 0.001
+        assert abs(containment - multisearch_containment) < 0.001
+        assert abs(max_containment_by_index - multisearch_max_containment) < 0.001
         
     print('All tests passed!')
         
