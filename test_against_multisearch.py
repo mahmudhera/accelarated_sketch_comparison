@@ -1,5 +1,6 @@
 import argparse
 import pandas as pd
+from tqdm import tqdm
 
 def parse_args():
     # arguments: multisearch_file, by_index_file, genome_names
@@ -30,7 +31,7 @@ def test_against_multisearch(multisearch_file, by_index_file, genome_names):
     genome_names = read_genome_names(genome_names)
     
     # iterate over all rows of the by_index file
-    for i, row in df_by_index.iterrows():
+    for index, row in tqdm(df_by_index.iterrows(), total=df_by_index.shape[0]):
         query_id = int(row['query_id'])
         match_id = int(row['match_id'])
         jaccard = row['jaccard']
