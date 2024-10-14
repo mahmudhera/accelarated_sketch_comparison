@@ -67,8 +67,6 @@ def test_against_multisearch(multisearch_file, by_index_file, genome_names):
             # compare the jaccard and containment values
             assert abs(jaccard_multisearch - jaccard_by_index) < 1e-4
             assert abs(containment_multisearch - containment_by_index) < 1e-4
-            
-        print('')
                 
     print('All tests passed!')
         
