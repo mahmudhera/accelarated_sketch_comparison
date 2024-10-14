@@ -30,6 +30,11 @@ def test_against_multisearch(multisearch_file, by_index_file, genome_names):
     df_by_index = read_by_index(by_index_file)
     genome_names = read_genome_names(genome_names)
     
+    # create an index of the genome names
+    genome_name_to_id = {}
+    for i in range(len(genome_names)):
+        genome_name_to_id[genome_names[i]] = i
+    
     # iterate over all rows of the by_index file
     num_genomes = len(genome_names)
     for i in tqdm(range(num_genomes)):
@@ -48,7 +53,11 @@ def test_against_multisearch(multisearch_file, by_index_file, genome_names):
         # iterate over all rows of the multisearch file
         for index, row in multisearch_results_with_this_query.iterrows():
             match_name = row['match_name']
-            match_id = genome_names.index(match_name)
+            match_id = genome_name_to_id[match_name]
+            
+            if match_id == i:
+                continue
+            
             jaccard_multisearch = row['jaccard']
             containment_multisearch = row['containment']
             
