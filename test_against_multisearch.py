@@ -52,6 +52,7 @@ def test_against_multisearch(multisearch_file, by_index_file, genome_names):
         
 def main():
     args = parse_args()
+    print('Testing for ...')
     # show the arguments
     print(args)
     test_against_multisearch(args.multisearch_file, args.by_index_file, args.genome_names)
