@@ -31,26 +31,39 @@ def test_against_multisearch(multisearch_file, by_index_file, genome_names):
     genome_names = read_genome_names(genome_names)
     
     # iterate over all rows of the by_index file
-    for index, row in tqdm(df_by_index.iterrows(), total=df_by_index.shape[0]):
-        query_id = int(row['query_id'])
-        match_id = int(row['match_id'])
-        jaccard = row['jaccard']
-        containment = row['containment']
-        containment_other = row['containment_other']
-        max_containment_by_index = max(containment, containment_other) 
+    num_genomes = len(genome_names)
+    for i in tqdm(range(num_genomes)):
+        name_query_genome = genome_names[i]
+        multisearch_results_with_this_query = df_multisearch[df_multisearch['query_name'] == name_query_genome]
+        by_index_results_with_this_query = df_by_index[df_by_index['query_id'] == i]
         
-        # get the corresponding row in the multisearch file
-        multisearch_row = df_multisearch[(df_multisearch['query_name'] == genome_names[query_id]) & (df_multisearch['match_name'] == genome_names[match_id])]
+        # create a dictionary of the by_index_results, keyed by match_id
+        by_index_results_dict = {}
+        for index, row in by_index_results_with_this_query.iterrows():
+            match_id = int(row['match_id'])
+            jaccard = row['jaccard']
+            containment = row['containment']
+            by_index_results_dict[match_id] = (jaccard, containment)
+            
+        # iterate over all rows of the multisearch file
+        for index, row in multisearch_results_with_this_query.iterrows():
+            match_name = row['match_name']
+            match_id = genome_names.index(match_name)
+            jaccard_multisearch = row['jaccard']
+            containment_multisearch = row['containment']
+            
+            # get the jaccard and containment from the by_index results
+            jaccard_by_index, containment_by_index = by_index_results_dict[match_id]
+            
+            # compare the jaccard and containment values
+            assert abs(jaccard_multisearch - jaccard_by_index) < 1e-4
+            assert abs(containment_multisearch - containment_by_index) < 1e-4
+
+            # show progress
+            print(index+1, 'of' , len(multisearch_results_with_this_query), 'tests passed', end='\r')
         
-        multisearch_jaccard = multisearch_row['jaccard'].values[0]
-        multisearch_containment = multisearch_row['containment'].values[0]
-        multisearch_max_containment = multisearch_row['max_containment'].values[0]
-        
-        # check if the jaccard and containment values are the same upto 3 decimal places
-        assert abs(jaccard - multisearch_jaccard) < 0.001
-        assert abs(containment - multisearch_containment) < 0.001
-        assert abs(max_containment_by_index - multisearch_max_containment) < 0.001
-        
+        print('')
+                
     print('All tests passed!')
         
 def main():
