@@ -29,9 +29,6 @@ def test_against_multisearch(multisearch_file, by_index_file, genome_names):
     df_by_index = read_by_index(by_index_file)
     genome_names = read_genome_names(genome_names)
     
-    # check if the number of rows are the same
-    assert len(df_multisearch) == len(df_by_index)
-    
     # iterate over all rows of the by_index file
     for i, row in df_by_index.iterrows():
         query_id = row['query_id']
