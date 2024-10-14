@@ -29,11 +29,7 @@ def read_by_index(by_index_file):
     return df
 
 
-def test_one_chunk(multisearch_file, by_index_file, genome_names, genome_names_start_index, genome_names_end_index):
-    df_multisearch = read_multisearch(multisearch_file)
-    df_by_index = read_by_index(by_index_file)
-    genome_names = read_genome_names(genome_names)
-    
+def test_one_chunk(df_multisearch, df_by_index, genome_names, genome_names_start_index, genome_names_end_index):    
     # create an index of the genome names
     genome_name_to_id = {}
     for i in range(len(genome_names)):
@@ -75,9 +71,9 @@ def test_one_chunk(multisearch_file, by_index_file, genome_names, genome_names_s
 
 
 def test_against_multisearch(multisearch_file, by_index_file, genome_names, num_threads):
+    genome_names = read_genome_names(genome_names)
     df_multisearch = read_multisearch(multisearch_file)
     df_by_index = read_by_index(by_index_file)
-    genome_names = read_genome_names(genome_names)
     
     # create an index of the genome names
     genome_name_to_id = {}
@@ -93,7 +89,7 @@ def test_against_multisearch(multisearch_file, by_index_file, genome_names, num_
         if i == num_threads - 1:
             end_index = num_genomes
         # run test_one_chunk in parallel using multiprocessing
-        p = multiprocessing.Process(target=test_one_chunk, args=(multisearch_file, by_index_file, genome_names, start_index, end_index))
+        p = multiprocessing.Process(target=test_one_chunk, args=(df_multisearch, df_by_index, genome_names, start_index, end_index))
         p.start()
         process_list.append(p)
     
