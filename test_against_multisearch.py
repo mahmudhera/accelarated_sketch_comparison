@@ -56,3 +56,6 @@ def main():
     # show the arguments
     print(args)
     test_against_multisearch(args.multisearch_file, args.by_index_file, args.genome_names)
+    
+if __name__ == '__main__':
+    main()
