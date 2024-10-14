@@ -1,6 +1,7 @@
 import argparse
 import pandas as pd
 from tqdm import tqdm
+import multiprocessing
 
 def parse_args():
     # arguments: multisearch_file, by_index_file, genome_names
@@ -8,6 +9,8 @@ def parse_args():
     parser.add_argument('multisearch_file', type=argparse.FileType('r'))
     parser.add_argument('by_index_file', type=argparse.FileType('r'))
     parser.add_argument('genome_names', type=argparse.FileType('r'))
+    # add num_threads
+    parser.add_argument('--num_threads', type=int, default=1)
     
     return parser.parse_args()
 
@@ -25,7 +28,8 @@ def read_by_index(by_index_file):
     df.columns = ['query_id', 'match_id', 'jaccard', 'containment', 'containment_other']
     return df
 
-def test_against_multisearch(multisearch_file, by_index_file, genome_names):
+
+def test_one_chunk(multisearch_file, by_index_file, genome_names, genome_names_start_index, genome_names_end_index):
     df_multisearch = read_multisearch(multisearch_file)
     df_by_index = read_by_index(by_index_file)
     genome_names = read_genome_names(genome_names)
@@ -37,7 +41,7 @@ def test_against_multisearch(multisearch_file, by_index_file, genome_names):
     
     # iterate over all rows of the by_index file
     num_genomes = len(genome_names)
-    for i in tqdm(range(num_genomes)):
+    for i in range(genome_names_start_index, genome_names_end_index):
         name_query_genome = genome_names[i]
         multisearch_results_with_this_query = df_multisearch[df_multisearch['query_name'] == name_query_genome]
         by_index_results_with_this_query = df_by_index[df_by_index['query_id'] == i]
@@ -67,6 +71,35 @@ def test_against_multisearch(multisearch_file, by_index_file, genome_names):
             # compare the jaccard and containment values
             assert abs(jaccard_multisearch - jaccard_by_index) < 1e-4
             assert abs(containment_multisearch - containment_by_index) < 1e-4
+
+
+
+def test_against_multisearch(multisearch_file, by_index_file, genome_names, num_threads):
+    df_multisearch = read_multisearch(multisearch_file)
+    df_by_index = read_by_index(by_index_file)
+    genome_names = read_genome_names(genome_names)
+    
+    # create an index of the genome names
+    genome_name_to_id = {}
+    for i in range(len(genome_names)):
+        genome_name_to_id[genome_names[i]] = i
+    
+    num_genomes = len(genome_names)
+    chunk_size = num_genomes // num_threads
+    process_list = []
+    for i in range(num_threads):
+        start_index = i * chunk_size
+        end_index = start_index + chunk_size
+        if i == num_threads - 1:
+            end_index = num_genomes
+        # run test_one_chunk in parallel using multiprocessing
+        p = multiprocessing.Process(target=test_one_chunk, args=(multisearch_file, by_index_file, genome_names, start_index, end_index))
+        p.start()
+        process_list.append(p)
+    
+    for p in process_list:
+        p.join()
+    
                 
     print('All tests passed!')
         
@@ -75,7 +108,7 @@ def main():
     print('Testing for ...')
     # show the arguments
     print(args)
-    test_against_multisearch(args.multisearch_file, args.by_index_file, args.genome_names)
+    test_against_multisearch(args.multisearch_file, args.by_index_file, args.genome_names, args.num_threads)
     
 if __name__ == '__main__':
     main()
