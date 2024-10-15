@@ -77,16 +77,28 @@ void compute_index_from_sketches() {
 void load_hash_index() {
     string filename = "hash_index.txt";
     ifstream infile(filename);
+
+    if (!infile.is_open()) {
+        cout << "Error: cannot open file " << filename << endl;
+        exit(1);
+    }
+
+    string line;
     hash_t hash;
-    while (infile >> hash) {
+    
+    while ( getline(infile, line) ) {
+        istringstream iss(line);
+        iss >> hash;
         vector<int> sketch_indices;
         int sketch_index;
-        while (infile >> sketch_index) {
+        while (iss >> sketch_index) {
             sketch_indices.push_back(sketch_index);
         }
         hash_index[hash] = sketch_indices;
     }
+
     infile.close();
+    
 }
 
 
