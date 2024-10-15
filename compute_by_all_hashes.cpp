@@ -98,7 +98,7 @@ void load_hash_index() {
     }
 
     infile.close();
-    
+
 }
 
 
@@ -293,6 +293,10 @@ void read_sketches() {
 void get_sketch_names(const std::string& filelist) {
     // the filelist is a file, where each line is a path to a sketch file
     std::ifstream file(filelist);
+    if (!file.is_open()) {
+        std::cerr << "Could not open the filelist: " << filelist << std::endl;
+        return;
+    }
     std::string line;
     while (std::getline(file, line)) {
         sketch_names.push_back(line);
