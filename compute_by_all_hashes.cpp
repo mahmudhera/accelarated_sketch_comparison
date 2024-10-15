@@ -90,6 +90,27 @@ void load_hash_index() {
 }
 
 
+void show_stats_of_hash_index() {
+    // show the number of hashes in the index
+    cout << "Number of hashes in the index: " << hash_index.size() << endl;
+
+    // show 10 random hashes and their corresponding sketches
+    cout << "10 random hashes and their corresponding sketches:" << endl;
+    int count = 0;
+    for (auto it = hash_index.begin(); it != hash_index.end(); it++) {
+        cout << it->first << " ";
+        for (int i = 0; i < it->second.size(); i++) {
+            cout << it->second[i] << " ";
+        }
+        cout << endl;
+        count++;
+        if (count == 10) {
+            break;
+        }
+    }
+}
+
+
 using MapType = unordered_map<hash_t, vector<int>>;
 
 
@@ -106,12 +127,15 @@ void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_
         }
     }
 
-    // write the similarity values to file. filename: out_dir/id.txt, where id is thread id in 3 digits
+    // write the similarity values to file. filename: out_dir/passid_threadid.txt, where id is thread id in 3 digits
     string id_in_three_digits_str = to_string(thread_id);
     while (id_in_three_digits_str.size() < 3) {
         id_in_three_digits_str = "0" + id_in_three_digits_str;
     }
-    string filename = out_dir + "/" + to_string(pass_id) + "_" + id_in_three_digits_str + ".txt";
+    string pass_id_str = to_string(pass_id);
+    //if ( pass_id_str.size() == 1 )
+    //    pass_id_str = "0" + pass_id_str;
+    string filename = out_dir + "/" + pass_id_str + "_" + id_in_three_digits_str + ".txt";
     ofstream outfile(filename);
 
     for (int i = sketch_start_index; i < sketch_end_index; i++) {
@@ -351,6 +375,9 @@ int main(int argc, char* argv[]) {
     }
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to create/load the index: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
+
+    // show stats of the hash index
+    show_stats_of_hash_index();
 
     // create the intersection matrix
     start = std::chrono::high_resolution_clock::now();
