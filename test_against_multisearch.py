@@ -32,7 +32,7 @@ def read_by_index(by_index_file):
 def test_one_chunk(df_multisearch, df_by_index, genome_names, genome_names_start_index, genome_names_end_index):    
     # create an index of the genome names
     genome_name_to_id = {}
-    for i in range(len(genome_names)):
+    for i in range(genome_names_start_index, genome_names_end_index):
         genome_name_to_id[genome_names[i]] = i
     
     # iterate over all rows of the by_index file
@@ -74,11 +74,6 @@ def test_against_multisearch(multisearch_file, by_index_file, genome_names, num_
     genome_names = read_genome_names(genome_names)
     df_multisearch = read_multisearch(multisearch_file)
     df_by_index = read_by_index(by_index_file)
-    
-    # create an index of the genome names
-    genome_name_to_id = {}
-    for i in range(len(genome_names)):
-        genome_name_to_id[genome_names[i]] = i
     
     num_genomes = len(genome_names)
     chunk_size = num_genomes // num_threads
