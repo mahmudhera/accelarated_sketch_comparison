@@ -255,9 +255,6 @@ int main(int argc, char* argv[]) {
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to create the index: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
 
-    // show stats of the hash index
-    show_stats_of_hash_index();
-
     // create the intersection matrix
     start = std::chrono::high_resolution_clock::now();
 
