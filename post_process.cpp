@@ -227,12 +227,12 @@ int main(int argc, char* argv[]) {
     cout << "Time taken to read similar info: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_sim - end_sort).count() << " milliseconds" << endl;
 
     // show the first 10 similars
-    cout << "First 10 similars:" << endl;
+    cout << "Last 10 similars:" << endl;
     for (int i = 0; i < 10; i++) {
-        cout << i << ": ";
-        int min = (int)similars[i].size() < 10 ? similars[i].size() : 10;
+        cout << num_sketches-i-1 << ": ";
+        int min = (int)similars[num_sketches-i-1].size() < 10 ? similars[num_sketches-i-1].size() : 10;
         for (int j = 0; j < min; j++) {
-            cout << similars[i][j] << " ";
+            cout << similars[num_sketches-i-1][j] << " ";
         }
         cout << endl;
     }
