@@ -32,11 +32,11 @@ def read_by_index(by_index_file):
 def test_one_chunk(df_multisearch, df_by_index, genome_names, genome_names_start_index, genome_names_end_index):    
     # create an index of the genome names
     genome_name_to_id = {}
-    for i in range(genome_names_start_index, genome_names_end_index):
+    num_genomes = len(genome_names)
+    for i in range(num_genomes):
         genome_name_to_id[genome_names[i]] = i
     
     # iterate over all rows of the by_index file
-    num_genomes = len(genome_names)
     for i in range(genome_names_start_index, genome_names_end_index):
         name_query_genome = genome_names[i]
         multisearch_results_with_this_query = df_multisearch[df_multisearch['query_name'] == name_query_genome]
