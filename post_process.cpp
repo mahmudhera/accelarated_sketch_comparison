@@ -232,28 +232,23 @@ int main(int argc, char* argv[]) {
     vector<int> selected_genome_ids;
     vector<bool> genome_id_to_exclude(num_sketches, false);
     for (int i = 0; i < num_sketches; i++) {
-        cout << "Processing " << i << "..." << endl;
+        cout << "Processing " << i << "..." << '\r';
         int genome_id_this = genome_id_size_pairs[i].first;
         int size_this = genome_id_size_pairs[i].second;
         bool select_this = true;
         // show my size
-        cout << "My size: " << size_this << endl;
         for (int j = 0; j < similars[genome_id_this].size(); j++) {
             int genome_id_other = similars[genome_id_this][j];
             if (genome_id_to_exclude[genome_id_other]) {
                 continue;
             }
             int size_other = sketches[genome_id_other].size();
-            cout << "Other: " << genome_id_other << endl;
-            cout << "Other size: " << size_other << endl;
             if (size_other > size_this) {
                 select_this = false;
-                cout << "Excluded " << genome_id_this << " since contained in " << genome_id_other << endl;
                 break;
             }
         }
         if (select_this) {
-            cout << "Selected " << i << endl;
             selected_genome_ids.push_back(genome_id_this);
         } else {
             genome_id_to_exclude[genome_id_this] = true;
