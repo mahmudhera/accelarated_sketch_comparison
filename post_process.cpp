@@ -230,6 +230,7 @@ int main(int argc, char* argv[]) {
     // start processing
     cout << "Start processing..." << endl;
     vector<int> selected_genome_ids;
+    vector<bool> genome_id_to_exclude(num_sketches, false);
     for (int i = 0; i < num_sketches; i++) {
         cout << "Processing " << i << "..." << endl;
         int genome_id_this = genome_id_size_pairs[i].first;
@@ -237,6 +238,9 @@ int main(int argc, char* argv[]) {
         bool select_this = true;
         for (int j = 0; j < similars[genome_id_this].size(); j++) {
             int genome_id_other = similars[genome_id_this][j];
+            if (genome_id_to_exclude[genome_id_other]) {
+                continue;
+            }
             int size_other = genome_id_size_pairs[genome_id_other].second;
             if (size_other > size_this) {
                 select_this = false;
@@ -246,6 +250,8 @@ int main(int argc, char* argv[]) {
         if (select_this) {
             cout << "Selected " << i << endl;
             selected_genome_ids.push_back(genome_id_this);
+        } else {
+            genome_id_to_exclude[genome_id_this] = true;
         }
     }
 
