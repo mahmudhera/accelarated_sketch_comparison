@@ -51,11 +51,13 @@ void read_similar_info(string simFileList) {
         }
         string simPairLine;
         while (getline(simFile, simPairLine)) {
-            // each line looks like: id1,id2,sim1,sim2,sim3
+            // each line looks like: id1,id2,sim1,sim2,sim3, comma separated
             istringstream iss(simPairLine);
             int id1, id2;
-            float sim1, sim2, sim3;
-            iss >> id1 >> id2 >> sim1 >> sim2 >> sim3;
+            char ch;
+            iss >> id1;
+            iss >> ch;
+            iss >> id2;
             similars[id1].push_back(id2);
         }
     }
