@@ -202,7 +202,10 @@ int main(int argc, char* argv[]) {
     cout << "Some similar info:" << endl;
     for (int i = 0; i < 10; i++) {
         cout << i << "\t";
-        cout << similars[i].size() << "\t";
+        cout << similars[i].size() << "endl";
+        for (int j = 0; j < 10; j++) {
+            cout << similars[i][j] << "\t";
+        }
         cout << endl;
     }
 
