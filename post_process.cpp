@@ -241,7 +241,7 @@ int main(int argc, char* argv[]) {
             if (genome_id_to_exclude[genome_id_other]) {
                 continue;
             }
-            int size_other = genome_id_size_pairs[genome_id_other].second;
+            int size_other = sketches[genome_id_other].size();
             if (size_other > size_this) {
                 select_this = false;
                 break;
