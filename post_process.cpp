@@ -25,9 +25,9 @@ vector<string> sketch_names;
 vector<vector<hash_t>> sketches;
 int num_sketches;
 int num_threads = 1;
-unordered_map<hash_t, vector<int>> hash_index;
 int count_empty_sketch = 0;
 mutex mutex_count_empty_sketch;
+vector<pair<int, int>> genome_id_size_pairs;
 
 
 
@@ -67,6 +67,7 @@ void read_sketches_one_chunk(int start_index, int end_index) {
             count_empty_sketch++;
             mutex_count_empty_sketch.unlock();
         }
+        genome_id_size_pairs[i] = {i, sketches[i].size()};
     }
 }
 
@@ -76,7 +77,9 @@ void read_sketches_one_chunk(int start_index, int end_index) {
 void read_sketches() {
     for (int i = 0; i < num_sketches; i++) {
         sketches.push_back( vector<hash_t>() );
+        genome_id_size_pairs.push_back({-1, 0});
     }
+
 
     int chunk_size = num_sketches / num_threads;
     vector<thread> threads;
@@ -140,5 +143,5 @@ int main(int argc, char* argv[]) {
     cout << "Time taken to read the sketches: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_read - start_program).count() << " milliseconds" << endl;
 
     return 0;
-    
+
 }
