@@ -187,14 +187,15 @@ void get_sketch_names(const std::string& filelist) {
 int main(int argc, char* argv[]) {
 
     // command line arguments: sigFileList simFileList numThreads
-    if (argc != 4) {
-        std::cerr << "Usage: " << argv[0] << " <sigFileList> <simFileList> <numThreads>" << std::endl;
+    if (argc != 5) {
+        std::cerr << "Usage: " << argv[0] << " <sigFileList> <simFileList> <numThreads> <outFileName>" << std::endl;
         return 1;
     }
 
     string sigFileList = argv[1];
     string simFileList = argv[2];
     num_threads = stoi(argv[3]);
+    string outFileName = argv[4];
 
     // read the sketch files
     auto start_program = std::chrono::high_resolution_clock::now();
@@ -252,13 +253,14 @@ int main(int argc, char* argv[]) {
     cout << "Time taken for processing: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - end_sim).count() << " milliseconds" << endl;
 
     // write the selected genome ids to file
-    string selected_genome_ids_filename = "selected_genome_ids.txt";
-    ofstream outfile(selected_genome_ids_filename);
+    ofstream outfile(outFileName);
     for (int i = 0; i < selected_genome_ids.size(); i++) {
-        outfile << selected_genome_ids[i] << endl;
+        int genome_id = selected_genome_ids[i];
+        string sketch_name = sketch_names[genome_id];
+        outfile << sketch_name << endl;
     }
     outfile.close();
-    
+
 
     return 0;
 
