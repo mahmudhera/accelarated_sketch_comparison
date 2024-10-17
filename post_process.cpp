@@ -263,6 +263,17 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < selected_genome_ids.size(); i++) {
         int genome_id = selected_genome_ids[i];
         string sketch_name = sketch_names[genome_id];
+        // split using / and get the last part
+        size_t found = sketch_name.find_last_of("/");
+        if (found != string::npos) {
+            sketch_name = sketch_name.substr(found+1);
+        }
+        // remove the extension
+        found = sketch_name.find_last_of(".");
+        if (found != string::npos) {
+            sketch_name = sketch_name.substr(0, found);
+        }
+        
         outfile << sketch_name << endl;
     }
     outfile.close();
