@@ -243,7 +243,7 @@ int main(int argc, char* argv[]) {
                 continue;
             }
             int size_other = sketches[genome_id_other].size();
-            if (size_other > size_this) {
+            if (size_other >= size_this) {
                 select_this = false;
                 break;
             }
