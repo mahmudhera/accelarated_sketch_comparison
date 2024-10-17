@@ -226,16 +226,39 @@ int main(int argc, char* argv[]) {
     auto end_sim = std::chrono::high_resolution_clock::now();
     cout << "Time taken to read similar info: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_sim - end_sort).count() << " milliseconds" << endl;
 
-    // show the first 10 similars
-    cout << "Last 10 similars:" << endl;
-    for (int i = 0; i < 10; i++) {
-        cout << num_sketches-i-1 << ": ";
-        int min = (int)similars[num_sketches-i-1].size() < 10 ? similars[num_sketches-i-1].size() : 10;
-        for (int j = 0; j < min; j++) {
-            cout << similars[num_sketches-i-1][j] << " ";
+    // start processing
+    cout << "Start processing..." << endl;
+    vector<int> selected_genome_ids;
+    for (int i = 0; i < num_sketches; i++) {
+        cout << "Processing " << i << "..." << endl;
+        int genome_id_this = genome_id_size_pairs[i].first;
+        int size_this = genome_id_size_pairs[i].second;
+        bool select_this = true;
+        for (int j = 0; j < similars[genome_id_this].size(); j++) {
+            int genome_id_other = similars[genome_id_this][j];
+            int size_other = genome_id_size_pairs[genome_id_other].second;
+            if (size_other > size_this) {
+                select_this = false;
+                break;
+            }
         }
-        cout << endl;
+        if (select_this) {
+            cout << "Selected " << i << endl;
+            selected_genome_ids.push_back(genome_id_this);
+        }
     }
+
+    auto end = std::chrono::high_resolution_clock::now();
+    cout << "Time taken for processing: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - end_sim).count() << " milliseconds" << endl;
+
+    // write the selected genome ids to file
+    string selected_genome_ids_filename = "selected_genome_ids.txt";
+    ofstream outfile(selected_genome_ids_filename);
+    for (int i = 0; i < selected_genome_ids.size(); i++) {
+        outfile << selected_genome_ids[i] << endl;
+    }
+    outfile.close();
+    
 
     return 0;
 
