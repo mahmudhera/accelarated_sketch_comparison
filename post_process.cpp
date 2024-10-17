@@ -244,6 +244,7 @@ int main(int argc, char* argv[]) {
             int size_other = sketches[genome_id_other].size();
             if (size_other > size_this) {
                 select_this = false;
+                cout << "Excluded " << genome_id_this << " since contained in " << genome_id_other << endl;
                 break;
             }
         }
