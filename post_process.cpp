@@ -32,7 +32,31 @@ vector<vector<int>> similars;
 
 
 
-void read_similar_info(string simFileList) {
+void read_similar_info_one_file(string filename) {
+    
+    ifstream simFile(filename);
+    if (!simFile.is_open()) {
+        cerr << "Could not open the file: " << filename << endl;
+        exit(1);
+    }
+    string simPairLine;
+    while (getline(simFile, simPairLine)) {
+        // each line looks like: id1,id2,sim1,sim2,sim3, comma separated
+        istringstream iss(simPairLine);
+        int id1, id2;
+        char ch;
+        iss >> id1;
+        iss >> ch;
+        iss >> id2;
+        similars[id1].push_back(id2);
+    }
+    simFile.close();
+
+}
+
+
+
+void read_similar_info(string simFileList, int num_threads) {
     for (int i = 0; i < num_sketches; i++) {
         similars.push_back(vector<int>());
     }
@@ -42,26 +66,30 @@ void read_similar_info(string simFileList) {
         cerr << "Could not open the file: " << simFileList << endl;
         return;
     }
+    vector<string> filenames;
     string line;
     while (getline(file, line)) {
-        ifstream simFile(line);
-        if (!simFile.is_open()) {
-            cerr << "Could not open the file: " << line << endl;
-            continue;
-        }
-        string simPairLine;
-        while (getline(simFile, simPairLine)) {
-            // each line looks like: id1,id2,sim1,sim2,sim3, comma separated
-            istringstream iss(simPairLine);
-            int id1, id2;
-            char ch;
-            iss >> id1;
-            iss >> ch;
-            iss >> id2;
-            similars[id1].push_back(id2);
-        }
+        filenames.push_back(line);
     }
     file.close();
+
+    // read the similar info, one thread for one file
+    int num_processed = 0;
+    int to_process = filenames.size();
+    while (num_processed < to_process) {
+        vector<thread> threads;
+        for (int i = 0; i < num_threads; i++) {
+            if (num_processed == to_process) {
+                break;
+            }
+            threads.push_back(thread(read_similar_info_one_file, filenames[num_processed]));
+            num_processed++;
+        }
+        for (int i = 0; i < threads.size(); i++) {
+            threads[i].join();
+        }
+    }
+
 }
 
 
@@ -193,24 +221,18 @@ int main(int argc, char* argv[]) {
 
     // read the similar info
     cout << "Reading similar info..." << endl;
-    read_similar_info(simFileList);
+    read_similar_info(simFileList, num_threads);
 
     auto end_sim = std::chrono::high_resolution_clock::now();
     cout << "Time taken to read similar info: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_sim - end_sort).count() << " milliseconds" << endl;
 
-    // show some similar info
-    cout << "Some similar info:" << endl;
+    // show the first 10 similars
+    cout << "First 10 similars:" << endl;
     for (int i = 0; i < 10; i++) {
-        cout << i << "\t";
-        cout << similars[i].size() << endl;
-        int min;
-        if (similars[i].size() < 10) {
-            min = similars[i].size();
-        } else {
-            min = 10;
-        }
+        cout << i << ": ";
+        int min = (int)similars[i].size() < 10 ? similars[i].size() : 10;
         for (int j = 0; j < min; j++) {
-            cout << similars[i][j] << "\t";
+            cout << similars[i][j] << " ";
         }
         cout << endl;
     }
