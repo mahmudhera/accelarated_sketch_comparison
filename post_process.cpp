@@ -199,8 +199,8 @@ int main(int argc, char* argv[]) {
     cout << "Some similar info:" << endl;
     for (int i = 0; i < 10; i++) {
         cout << i << "\t";
-        for (int j = 0; j < similars[genome_id_size_pairs[i].first].size(); j++) {
-            cout << similars[genome_id_size_pairs[i].first][j] << "\t";
+        for (int j = 0; j < similars[i].size(); j++) {
+            cout << similars[i][j] << "\t";
         }
         cout << endl;
     }
