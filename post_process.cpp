@@ -142,6 +142,21 @@ int main(int argc, char* argv[]) {
     auto end_read = std::chrono::high_resolution_clock::now();
     cout << "Time taken to read the sketches: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_read - start_program).count() << " milliseconds" << endl;
 
+    // sort genome_id_size_pairs by size
+    cout << "Sorting genome_id_size_pairs by size..." << endl;
+    sort(genome_id_size_pairs.begin(), genome_id_size_pairs.end(), [](const pair<int, int>& a, const pair<int, int>& b) {
+        return a.second < b.second;
+    });
+
+    auto end_sort = std::chrono::high_resolution_clock::now();
+    cout << "Time taken to sort genome_id_size_pairs: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_sort - end_read).count() << " milliseconds" << endl;
+
+    // show first 10 genome_id_size_pairs
+    cout << "First 10 genome_id_size_pairs:" << endl;
+    for (int i = 0; i < 10; i++) {
+        cout << genome_id_size_pairs[i].first << " " << genome_id_size_pairs[i].second << endl;
+    }
+
     return 0;
 
 }
