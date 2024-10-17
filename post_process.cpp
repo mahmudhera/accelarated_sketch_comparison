@@ -36,6 +36,7 @@ void read_similar_info(string simFileList) {
     for (int i = 0; i < num_sketches; i++) {
         similars.push_back(vector<int>());
     }
+
     ifstream file(simFileList);
     if (!file.is_open()) {
         cerr << "Could not open the file: " << simFileList << endl;
@@ -199,9 +200,7 @@ int main(int argc, char* argv[]) {
     cout << "Some similar info:" << endl;
     for (int i = 0; i < 10; i++) {
         cout << i << "\t";
-        for (int j = 0; j < similars[i].size(); j++) {
-            cout << similars[i][j] << "\t";
-        }
+        cout << similars[i].size() << "\t";
         cout << endl;
     }
 
