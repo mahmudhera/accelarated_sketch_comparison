@@ -229,8 +229,8 @@ void get_sketch_names(const std::string& filelist) {
 int main(int argc, char* argv[]) {
     
     // command line arguments: filelist outputfile
-    if (argc != 4) {
-        std::cerr << "Usage: " << argv[0] << " <file_list> <out_dir> <num_threads>" << std::endl;
+    if (argc != 5) {
+        std::cerr << "Usage: " << argv[0] << " <file_list> <out_dir> <num_threads> <gpu_id>" << std::endl;
         return 1;
     }
 
@@ -262,7 +262,7 @@ int main(int argc, char* argv[]) {
     compute_bit_representation();
 
     // set the device using the gpu_id
-    CHECK_CUDA(cudaSetDevice(std::stoi(argv[3])));
+    CHECK_CUDA(cudaSetDevice(std::stoi(argv[4])));
 
     // allocate memory on device
     float *d_bit_representation;
