@@ -30,24 +30,34 @@ def main():
     os.makedirs(signatures_dir, exist_ok=True)
 
     # copy the files in filelist to the 'signatures' directory
+    print ("copying files to signatures directory")
     for file in filelist:
         os.system(f'cp {file} {signatures_dir}')
+    print ("done copying files")
 
     # gzip all files in the 'signatures' directory
+    print ("gzipping files in signatures")
     for file in os.listdir(signatures_dir):
         os.system(f'gzip {os.path.join(signatures_dir, file)}')
+    print ("done gzipping files")
 
     # create a file 'SOURMASH-MANIFEST.csv' in working_dir
+    print('creating manifest file')
     cmd = 'sourmash sig manifest -o SOURMASH-MANIFEST.csv ' + signatures_dir
     os.system(cmd)
+    print('done creating manifest file')
 
     # create a zip file
+    print('creating zip file')
     with zipfile.ZipFile(args.output_zip_path, 'w') as zipf:
         for file in os.listdir(working_dir):
             zipf.write(os.path.join(working_dir, file), file)
+    print('done creating zip file')
 
     # remove the working directory
+    print('removing working directory')
     os.system(f'rm -r {working_dir}')
+    print('done removing working directory')
 
 if __name__ == '__main__':
     main()
