@@ -1,0 +1,55 @@
+import argparse
+import zipfile
+import os
+
+def parse_args():
+    # arguments: filelist, output_zip_path
+    parser = argparse.ArgumentParser(description='Create a zip file from a list of files')
+    parser.add_argument('filelist', type=str, help='Path to the file containing the list of files to be zipped')
+    parser.add_argument('output_zip_path', type=str, help='Path to the output zip file')
+    return parser.parse_args()
+
+def main():
+    args = parse_args()
+    with open(args.filelist, 'r') as f:
+        filelist = f.read().splitlines()
+
+    # structure of the zip file
+    # SOURMASH-MANIFEST.csv
+    # signatures/
+        # signature1.sig
+        # signature2.sig
+        # ...
+
+    # create a directory working_dir
+    working_dir = 'working_dir'
+    os.makedirs(working_dir, exist_ok=True)
+
+    # create a directory 'signatures' in working_dir 
+    signatures_dir = os.path.join(working_dir, 'signatures')
+    os.makedirs(signatures_dir, exist_ok=True)
+
+    # copy the files in filelist to the 'signatures' directory
+    for file in filelist:
+        os.system(f'cp {file} {signatures_dir}')
+
+    # gzip all files in the 'signatures' directory
+    for file in os.listdir(signatures_dir):
+        os.system(f'gzip {os.path.join(signatures_dir, file)}')
+
+    # create a file 'SOURMASH-MANIFEST.csv' in working_dir
+    cmd = 'sourmash sig manifest -o SOURMASH-MANIFEST.csv ' + signatures_dir
+    os.system(cmd)
+
+    # create a zip file
+    with zipfile.ZipFile(args.output_zip_path, 'w') as zipf:
+        for file in os.listdir(working_dir):
+            zipf.write(os.path.join(working_dir, file), file)
+
+    # remove the working directory
+    os.system(f'rm -r {working_dir}')
+
+if __name__ == '__main__':
+    main()
+        
+        
