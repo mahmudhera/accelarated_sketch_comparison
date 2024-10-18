@@ -57,7 +57,6 @@ def main():
     # remove the working directory
     print('removing working directory')
     os.system(f'rm -rf {working_dir}')
-    os.system()
     print('done removing working directory')
 
 if __name__ == '__main__':
