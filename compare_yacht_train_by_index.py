@@ -12,7 +12,7 @@ def parse_args():
 
 def compare_yacht_train_by_index(yacht_train_file, by_index_file):
     # read the yacht_train file
-    yacht_train_df = pd.read_csv(yacht_train_file, header=None, sep='\t')
+    yacht_train_df = pd.read_csv(yacht_train_file, sep='\t')
     yacht_selected_set = set(yacht_train_df['md5sum'])
 
     # read the by_index file: all lines
