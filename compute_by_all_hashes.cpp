@@ -458,7 +458,7 @@ int main(int argc, char* argv[]) {
 
     // write all the written file names to a file
     string written_file_names_filename = "by_index_file_names.txt";
-    fstream written_filelist_file(written_file_names_filename, ios::out);
+    ofstream written_filelist_file(written_file_names_filename);
     for (int i = 0; i < written_file_names.size(); i++) {
         written_filelist_file << written_file_names[i] << endl;
     }
