@@ -43,7 +43,7 @@ def main():
 
     # create a file 'SOURMASH-MANIFEST.csv' in working_dir
     print('creating manifest file')
-    cmd = 'sourmash sig manifest -o SOURMASH-MANIFEST.csv ' + signatures_dir
+    cmd = f'sourmash sig manifest -o {working_dir}/SOURMASH-MANIFEST.csv ' + signatures_dir
     os.system(cmd)
     print('done creating manifest file')
 
@@ -56,7 +56,8 @@ def main():
 
     # remove the working directory
     print('removing working directory')
-    os.system(f'rm -r {working_dir}')
+    os.system(f'rm -rf {working_dir}')
+    os.system()
     print('done removing working directory')
 
 if __name__ == '__main__':
