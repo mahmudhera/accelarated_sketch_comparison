@@ -31,6 +31,10 @@ def compare_yacht_train_by_index(yacht_train_file, by_index_file):
     print('Files in by_index but not in yacht_train:')
     print(by_index_set - yacht_selected_set)
 
+    # print the jaccard between the two sets
+    print('Jaccard between the two sets')
+    print(len(yacht_selected_set.intersection(by_index_set)) / len(yacht_selected_set.union(by_index_set)))
+
 if __name__ == '__main__':
     args = parse_args()
     compare_yacht_train_by_index(args.yacht_train_file, args.by_index_file)
