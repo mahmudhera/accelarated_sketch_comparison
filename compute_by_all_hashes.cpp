@@ -33,6 +33,9 @@ float containment_threshold = 0.01;
 int count_empty_sketch = 0;
 mutex mutex_count_empty_sketch;
 
+vector<string> written_file_names;
+mutex mutex_written_file_names;
+
 
 
 void compute_index_from_sketches() {
@@ -186,6 +189,12 @@ void compute_intersection_matrix_by_sketches(int sketch_start_index, int sketch_
     }
 
     outfile.close();
+
+    // write the filename to the written_file_names
+    mutex_written_file_names.lock();
+    written_file_names.push_back(filename);
+    mutex_written_file_names.unlock();
+
 }
 
 
@@ -412,6 +421,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     
+    written_file_names = vector<string>();
 
     for (int pass_id = 0; pass_id < num_passes; pass_id++) {
         // set zeros in the intersection matrix
@@ -445,6 +455,14 @@ int main(int argc, char* argv[]) {
         std::cout << "Pass " << pass_id << "/" << num_passes << " done." << std::endl;
     }
 
+
+    // write all the written file names to a file
+    string written_file_names_filename = "by_index_file_names.txt";
+    fstream written_filelist_file(written_file_names_filename, ios::out);
+    for (int i = 0; i < written_file_names.size(); i++) {
+        written_filelist_file << written_file_names[i] << endl;
+    }
+    written_filelist_file.close();
     
     end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken to create the intersection matrix: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " milliseconds" << std::endl;
