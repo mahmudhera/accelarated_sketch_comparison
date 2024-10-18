@@ -52,6 +52,9 @@ def main():
     with zipfile.ZipFile(args.output_zip_path, 'w') as zipf:
         for file in os.listdir(working_dir):
             zipf.write(os.path.join(working_dir, file), file)
+            if file == 'signatures':
+                for sig_file in os.listdir(signatures_dir):
+                    zipf.write(os.path.join(signatures_dir, sig_file), os.path.join('signatures', sig_file))
     print('done creating zip file')
 
     # remove the working directory
