@@ -50,6 +50,14 @@ def test_one_chunk(df_multisearch, df_by_index, genome_names, genome_names_start
             containment = row['containment']
             by_index_results_dict[match_id] = (jaccard, containment)
             
+        # create a dictionary of the multisearch_results, keyed by match_name
+        multisearch_results_dict = {}
+        for index, row in multisearch_results_with_this_query.iterrows():
+            match_name = row['match_name']
+            jaccard = row['jaccard']
+            containment = row['containment']
+            multisearch_results_dict[match_name] = (jaccard, containment)
+            
         # iterate over all rows of the multisearch file
         for index, row in multisearch_results_with_this_query.iterrows():
             match_name = row['match_name']
@@ -67,6 +75,29 @@ def test_one_chunk(df_multisearch, df_by_index, genome_names, genome_names_start
             # compare the jaccard and containment values
             assert abs(jaccard_multisearch - jaccard_by_index) < 1e-4
             assert abs(containment_multisearch - containment_by_index) < 1e-4
+            
+        # iterate over all rows of the by_index file
+        for index, row in by_index_results_with_this_query.iterrows():
+            match_id = int(row['match_id'])
+            if match_id == i:
+                continue
+            
+            jaccard_by_index = row['jaccard']
+            containment_by_index = row['containment']
+            
+            match_name = genome_names[match_id]
+            
+            if match_name not in multisearch_results_dict:
+                # print all information
+                print('Result found in by_index but not in multisearch: query_name =', name_query_genome, ', match_name =', match_name, ', jaccard =', jaccard_by_index, ', containment =', containment_by_index, ', query_id =', i, ', match_id =', match_id)
+                continue
+            
+            jaccard_multisearch, containment_multisearch = multisearch_results_dict[match_name]
+            
+            # compare the jaccard and containment values
+            assert abs(jaccard_multisearch - jaccard_by_index) < 1e-4
+            assert abs(containment_multisearch - containment_by_index) < 1e-4
+            
 
 
 
